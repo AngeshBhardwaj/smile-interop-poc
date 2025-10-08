@@ -203,3 +203,10 @@ docs/.docusaurus/
 
 # Nx cache
 .nx/
+
+# Claude code assistant
+.claude/
+CLAUDE.md
+
+# Other CLI Files
+interop-poc-plan-gpt.prompt.md
