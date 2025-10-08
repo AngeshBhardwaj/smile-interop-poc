@@ -1,0 +1,48 @@
+{
+  "name": "smile-interop-poc",
+  "version": "1.0.0",
+  "description": "Health Domain Interoperability Layer POC with Event-Driven Architecture",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "pnpm@8.15.6",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "test": "turbo test",
+    "test:watch": "turbo test:watch",
+    "test:integration": "turbo test:integration",
+    "test:bdd": "turbo test:bdd",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean",
+    "check-all": "turbo typecheck lint test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "setup": "pnpm install && pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "turbo": "^1.12.4",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "health",
+    "interoperability",
+    "cloudevents",
+    "openhim",
+    "event-driven",
+    "microservices",
+    "monorepo"
+  ],
+  "author": "SMILE Health Team",
+  "license": "MIT"
+}

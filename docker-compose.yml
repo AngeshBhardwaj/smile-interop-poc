@@ -1,0 +1,195 @@
+services:
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: smile-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP port
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # MongoDB for OpenHIM
+  mongo:
+    image: mongo:7.0
+    container_name: smile-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: openhim123
+      MONGO_INITDB_DATABASE: openhim
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # OpenHIM Core
+  openhim-core:
+    image: jembi/openhim-core:latest
+    container_name: smile-openhim-core
+    ports:
+      - "8080:8080"     # API port
+      - "5000:5000"     # HTTPS port
+      - "5001:5001"     # HTTP port
+    environment:
+      # MongoDB Configuration
+      mongo_url: "mongodb://root:openhim123@mongo:27017/openhim?authSource=admin"
+      mongo_atnaUrl: "mongodb://root:openhim123@mongo:27017/openhim?authSource=admin"
+
+      # Node Environment
+      NODE_ENV: "development"
+
+      # API Configuration
+      api_authWindowSeconds: 3600
+      api_httpsPort: 8080
+
+      # Router Configuration
+      router_httpPort: 5001
+      router_httpsPort: 5000
+      router_timeout: 60000
+
+      # Logging
+      logger_level: "info"
+
+      # Certificate Management
+      certificateManagement_watchFSForCert: false
+
+      # Caching
+      caching_enabled: true
+      caching_refreshMillis: 1000
+      caching_maxAge: 10000
+
+      # Alerts
+      alerts_enableAlerts: false
+
+      # Features
+      rerun_processor_enabled: false
+      bodyCull_enabled: false
+      polling_enabled: false
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - smile-network
+    # volumes:
+      # - ./docker/openhim/config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:8080/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # OpenHIM Console
+  openhim-console:
+    image: jembi/openhim-console:latest
+    container_name: smile-openhim-console
+    ports:
+      - "9000:80"
+    environment:
+      OPENHIM_CORE_HOST: openhim-core
+      OPENHIM_CORE_API_PORT: 8080
+      OPENHIM_CORE_MEDIATOR_PORT: 5000
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+    networks:
+      - smile-network
+    volumes:
+      - ./docker/openhim/console/config.json:/usr/share/nginx/html/config/default.json
+
+  # Jaeger for Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: smile-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "14268:14268"   # Jaeger collector HTTP
+      - "14250:14250"   # Jaeger collector gRPC
+      - "6831:6831/udp" # Jaeger agent UDP
+      - "6832:6832/udp" # Jaeger agent UDP
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+    networks:
+      - smile-network
+
+  # Prometheus for Metrics
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: smile-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - smile-network
+
+  # Grafana for Metrics Visualization
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: smile-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - smile-network
+
+  # Redis for Caching
+  redis:
+    image: redis:7.2-alpine
+    container_name: smile-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  rabbitmq_data:
+  mongo_data:
+  prometheus_data:
+  grafana_data:
+  redis_data:
+
+networks:
+  smile-network:
+    driver: bridge

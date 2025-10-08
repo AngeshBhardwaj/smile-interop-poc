@@ -1,0 +1,39 @@
+{
+  "mongo": {
+    "url": "mongodb://root:openhim123@mongo:27017/openhim?authSource=admin",
+    "atnaUrl": "mongodb://root:openhim123@mongo:27017/openhim?authSource=admin"
+  },
+  "logger": {
+    "level": "info"
+  },
+  "api": {
+    "authWindowSeconds": 3600
+  },
+  "router": {
+    "httpPort": 5001,
+    "httpsPort": 5000,
+    "timeout": 60000
+  },
+  "certificateManagement": {
+    "watchFSForCert": false
+  },
+  "caching": {
+    "enabled": true,
+    "refreshMillis": 1000,
+    "maxAge": 10000
+  },
+  "alerts": {
+    "enableAlerts": false
+  },
+  "rerun": {
+    "processor": {
+      "enabled": false
+    }
+  },
+  "bodyCull": {
+    "enabled": false
+  },
+  "polling": {
+    "enabled": false
+  }
+}
