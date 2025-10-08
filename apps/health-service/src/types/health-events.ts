@@ -398,7 +398,7 @@ export interface HealthEventMetadata {
   sessionId?: string;
 
   // Request tracking
-  correlationId?: string;
+  correlationId: string;
   requestId?: string;
 
   // Source system information
