@@ -74,15 +74,22 @@ export type MediatorRequest = z.infer<typeof mediatorRequestSchema>;
 export type MediatorResponse = z.infer<typeof mediatorResponseSchema>;
 
 export abstract class BaseMediator {
-  constructor(protected config: MediatorConfig) {}
+  constructor(protected config: MediatorConfig) {
+    logger.info('BaseMediator initialized', {
+      mediator: config.name,
+      version: config.version,
+      urn: config.urn,
+    });
+  }
 
   abstract process(request: MediatorRequest): Promise<MediatorResponse>;
 
   protected createSuccessResponse(
     status: number,
     body?: unknown,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
   ): MediatorResponse {
+    logger.debug('Creating success response', { status, hasBody: !!body });
     return {
       status: 'Successful',
       response: {
@@ -100,8 +107,9 @@ export abstract class BaseMediator {
   protected createErrorResponse(
     status: number,
     error: string,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
   ): MediatorResponse {
+    logger.error('Creating error response', { status, error });
     return {
       status: 'Failed',
       response: {
@@ -121,8 +129,13 @@ export abstract class BaseMediator {
   }
 
   async heartbeat(): Promise<{ uptime: number }> {
+    const uptime = process.uptime();
+    logger.debug('Mediator heartbeat check', {
+      mediator: this.config.name,
+      uptime: `${uptime}s`,
+    });
     return {
-      uptime: process.uptime(),
+      uptime,
     };
   }
 }

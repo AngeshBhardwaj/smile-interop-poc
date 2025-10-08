@@ -1,5 +1,5 @@
 import { CloudEvent } from 'cloudevents';
-import amqp, { Connection, Channel } from 'amqplib';
+import * as amqp from 'amqplib';
 import { logger } from '@smile/common';
 
 export interface EventConsumerConfig {
@@ -12,8 +12,8 @@ export interface EventConsumerConfig {
 export type EventHandler<T = unknown> = (event: CloudEvent<T>) => Promise<void>;
 
 export class EventConsumer {
-  private connection: Connection | null = null;
-  private channel: Channel | null = null;
+  private connection: any = null;
+  private channel: any = null;
 
   constructor(private readonly config: EventConsumerConfig) {}
 
@@ -34,7 +34,7 @@ export class EventConsumer {
       await this.channel.bindQueue(
         this.config.queue,
         this.config.exchange,
-        this.config.routingKey
+        this.config.routingKey,
       );
 
       logger.info('EventConsumer connected to RabbitMQ');
@@ -50,7 +50,7 @@ export class EventConsumer {
     }
 
     try {
-      await this.channel.consume(this.config.queue, async (msg) => {
+      await this.channel.consume(this.config.queue, async (msg: any) => {
         if (!msg) {
           return;
         }

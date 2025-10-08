@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
-import { ServiceConfig, HealthCheck, loadConfig } from '@smile/common';
+import { ServiceConfig, HealthCheck } from '@smile/common';
 
 const config: ServiceConfig = {
   name: 'app-service',
@@ -10,7 +10,7 @@ const config: ServiceConfig = {
   environment: (process.env.NODE_ENV as 'development' | 'production' | 'test') ?? 'development',
 };
 
-const app = express();
+const app: Express = express();
 
 app.use(cors());
 app.use(express.json());

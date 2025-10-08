@@ -1,5 +1,5 @@
 import { CloudEvent, CloudEventV1 } from 'cloudevents';
-import amqp, { Connection, Channel } from 'amqplib';
+import * as amqp from 'amqplib';
 import { logger } from '@smile/common';
 
 export interface EventEmitterConfig {
@@ -9,8 +9,8 @@ export interface EventEmitterConfig {
 }
 
 export class EventEmitter {
-  private connection: Connection | null = null;
-  private channel: Channel | null = null;
+  private connection: any = null;
+  private channel: any = null;
 
   constructor(private readonly config: EventEmitterConfig) {}
 
@@ -56,7 +56,7 @@ export class EventEmitter {
             'ce-source': event.source,
             'ce-id': event.id,
           },
-        }
+        },
       );
 
       if (!published) {

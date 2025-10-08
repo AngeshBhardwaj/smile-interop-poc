@@ -16,7 +16,7 @@ export const validateData = <T>(schema: z.ZodSchema<T>, data: unknown): T => {
 
 export const validateAsync = async <T>(
   schema: z.ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): Promise<T> => {
   const result = await schema.safeParseAsync(data);
 

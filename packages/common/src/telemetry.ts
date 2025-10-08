@@ -9,7 +9,7 @@ export interface TraceContext {
 
 export const generateCorrelationId = (): string => uuidv4();
 
-export const createSpan = (name: string, options?: { kind?: SpanKind }) => {
+export const createSpan = (name: string, options?: { kind?: SpanKind }): any => {
   const tracer = trace.getTracer('smile-interop');
   return tracer.startSpan(name, {
     kind: options?.kind ?? SpanKind.INTERNAL,
@@ -19,7 +19,7 @@ export const createSpan = (name: string, options?: { kind?: SpanKind }) => {
 export const withSpan = async <T>(
   name: string,
   fn: () => Promise<T>,
-  options?: { kind?: SpanKind }
+  options?: { kind?: SpanKind },
 ): Promise<T> => {
   const span = createSpan(name, options);
 

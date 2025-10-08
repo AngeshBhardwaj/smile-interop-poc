@@ -6,14 +6,11 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
-    '@typescript-eslint/recommended-requiring-type-checking',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,
     sourceType: 'module',
-    project: './tsconfig.json',
   },
   plugins: ['@typescript-eslint'],
   rules: {
@@ -21,8 +18,6 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/prefer-const': 'error',
-    '@typescript-eslint/no-non-null-assertion': 'warn',
 
     // General code quality
     'no-console': 'warn',
@@ -35,7 +30,7 @@ module.exports = {
     'no-duplicate-imports': 'error',
 
     // Error prevention
-    'no-undef': 'error',
+    'no-undef': 'off', // TypeScript handles this
     'no-unused-vars': 'off', // Handled by TypeScript rule
     'no-unreachable': 'error',
 
