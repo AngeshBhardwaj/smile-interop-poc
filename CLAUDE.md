@@ -126,19 +126,65 @@ turbo run build --filter=interop-layer
 ```
 interop-poc/
 ├── apps/
-│   ├── app-service/           # CloudEvent emitter
+│   ├── health-service/        # HIPAA-compliant health events (Step 2a ✅)
+│   ├── orders-service/        # Order lifecycle management (Step 2b)
 │   ├── interop-layer/         # Core routing and mediation logic
 │   ├── mediator-services/     # OpenHIM mediator implementations
 │   ├── webhook-services/      # HTTP endpoints for OpenHIM
 │   └── client-service/        # CloudEvent consumer
 ├── packages/
-│   ├── common/                # Shared utilities and types
+│   ├── common/                # Security utilities, audit logging, data masking
 │   ├── cloud-events/          # CloudEvents SDK wrapper
 │   └── openhim-adapter/       # OpenHIM integration utilities
 ├── docker/                    # Docker configurations
 ├── tests/                     # Integration and E2E tests
 └── docs/                      # API documentation
 ```
+
+## Current Development Phase: Step 2b - Orders Service
+
+### Step 2b: Order Management Service with Lifecycle Workflow
+
+#### **Order States & Transitions:**
+```
+DRAFT → SUBMITTED → APPROVED → PACKED → SHIPPED → RECEIVED → FULFILLED
+  ↑                  ↓                              ↓
+  ← ← ← ← ← ← ← ← REJECTED                      RETURNED → RETURN_COMPLETE
+              (If not approved)            (If not received properly)
+```
+
+#### **Core Endpoints:**
+- **POST** `/api/v1/orders` - Create new order (DRAFT state)
+- **GET** `/api/v1/orders` - List orders with filtering
+- **GET** `/api/v1/orders/:id` - Get specific order details
+- **PUT** `/api/v1/orders/:id` - Update order (only DRAFT/REJECTED states)
+- **DELETE** `/api/v1/orders/:id` - Delete order (only DRAFT state)
+
+#### **State Management Operations:**
+- **POST** `/api/v1/orders/:id/submit` - Submit draft for approval
+- **POST** `/api/v1/orders/:id/approve` - Approve submitted order
+- **POST** `/api/v1/orders/:id/reject` - Reject submitted order (returns to DRAFT)
+- **POST** `/api/v1/orders/:id/pack` - Mark as packed/ready for shipping
+- **POST** `/api/v1/orders/:id/ship` - Mark as shipped
+- **POST** `/api/v1/orders/:id/receive` - Mark as received
+- **POST** `/api/v1/orders/:id/fulfill` - Mark as fulfilled/completed
+- **POST** `/api/v1/orders/:id/return` - Initiate return process
+- **POST** `/api/v1/orders/:id/complete-return` - Complete return processing
+
+#### **Order Types Supported:**
+- **Medicines**: Prescriptions, pharmaceuticals, controlled substances
+- **Equipment**: Medical devices, diagnostic equipment, furniture
+- **Supplies**: Surgical supplies, general consumables, protective equipment
+- **Vaccines**: Immunizations, biological products
+
+#### **Key Features:**
+- Complete CRUD operations with state validation
+- Event-driven architecture (CloudEvents for each state change)
+- Role-based permissions for state transitions
+- Comprehensive audit trail and status history
+- Support for rejection/resubmission workflow
+- Return processing for quality issues
+- Business rule validation and enforcement
 
 ## Key Architectural Patterns
 
@@ -284,3 +330,4 @@ The project uses Docker Compose for local development with WSL compatibility:
 ### Health Checks
 All services expose `/health` endpoints for monitoring and troubleshooting.
 - Please remove the author details from commit message
+- Okay, it seems you keep forgetting instructions and need to be reminded again and again. I have asked before as well that we are in no rush to achieve the goal in shortest time and we need to ensure that the previous activity/step/phase was completed, verified and commited before we move to the next one. We verify by running the tests, tesing APIs from swagger, tesing with make command etc. so that we are very sure that whatever we checked as done is actually done and we didn't moved anything below the sag in order to move faster! THIS SHOULD BE AVOIDED, PLEASE!
