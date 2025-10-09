@@ -195,9 +195,11 @@ describe('HealthEventService', () => {
 
     it('should handle optional department fields correctly', async () => {
       const configWithoutDept = {
-        ...config,
-        departmentId: undefined,
-        departmentName: undefined,
+        rabbitmqUrl: config.rabbitmqUrl,
+        exchange: config.exchange,
+        routingKeyPrefix: config.routingKeyPrefix,
+        facilityId: config.facilityId,
+        facilityName: config.facilityName,
       };
       const serviceWithoutDept = new HealthEventService(configWithoutDept);
       await serviceWithoutDept.initialize();
@@ -224,9 +226,14 @@ describe('HealthEventService', () => {
       reasonForVisit: 'Annual checkup',
       facilityId: 'facility-001',
       scheduledBy: 'user-123',
-      scheduleDate: '2024-01-15T10:00:00Z',
-      lastModifiedDate: '2024-01-15T10:00:00Z',
+      scheduledDate: '2024-01-15T10:00:00Z',
+      lastModified: '2024-01-15T10:00:00Z',
       lastModifiedBy: 'user-123',
+      location: {
+        facilityId: 'facility-001',
+        facilityName: 'Test Facility',
+        room: 'Room 101',
+      },
     };
 
     beforeEach(async () => {
@@ -260,9 +267,9 @@ describe('HealthEventService', () => {
       recordId: 'VIT-001',
       patientId: 'PAT-001',
       vitalSigns: {
-        temperature: { value: 98.6, unit: 'F' },
-        bloodPressure: { systolic: 120, diastolic: 80, unit: 'mmHg' },
-        heartRate: { value: 72, unit: 'bpm' },
+        temperature: { value: 98.6, unit: 'fahrenheit' as const },
+        bloodPressure: { systolic: 120, diastolic: 80, unit: 'mmHg' as const },
+        heartRate: { value: 72, unit: 'bpm' as const },
       },
       recordedDateTime: '2024-01-15T10:00:00Z',
       facilityId: 'facility-001',

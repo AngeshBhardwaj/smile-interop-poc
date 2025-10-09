@@ -1,0 +1,26 @@
+{
+  "patientId": "PAT-TEST-001",
+  "firstName": "John",
+  "lastName": "Doe",
+  "dateOfBirth": "1990-01-15",
+  "gender": "male",
+  "phoneNumber": "555-0123",
+  "email": "john.doe@example.com",
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown",
+    "state": "CA",
+    "zipCode": "12345",
+    "country": "USA"
+  },
+  "insurance": {
+    "provider": "Blue Cross Blue Shield",
+    "policyNumber": "POL123456",
+    "memberId": "MEM789012",
+    "groupNumber": "GRP345678"
+  },
+  "registrationDate": "2024-01-15T10:00:00Z",
+  "facilityId": "facility-001",
+  "registeredBy": "user-123",
+  "status": "active"
+}

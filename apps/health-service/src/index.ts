@@ -122,7 +122,7 @@ const swaggerOptions = {
       { ApiKeyAuth: [] },
     ],
   },
-  apis: ['./src/controllers/*.ts', './src/types/*.ts'],
+  apis: ['src/controllers/*.ts', 'src/index.ts'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
@@ -205,11 +205,17 @@ function createApp(): Express {
  */
 function configureRoutes(app: Express, healthController: HealthController): void {
   // API Documentation
+  app.get('/api/docs/swagger.json', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.json(swaggerDocs);
+  });
+
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
     explorer: true,
     customSiteTitle: 'SMILE Health Service API',
     customfavIcon: '/favicon.ico',
     customCss: '.swagger-ui .topbar { display: none }',
+    swaggerUrl: '/api/docs/swagger.json',
   }));
 
   // Public health check (no auth required)
@@ -222,166 +228,11 @@ function configureRoutes(app: Express, healthController: HealthController): void
   apiRouter.use(healthDataAuthorization);
 
   // Health event endpoints
-  /**
-   * @swagger
-   * /api/v1/patients:
-   *   post:
-   *     summary: Register a new patient
-   *     tags: [Patients]
-   *     security:
-   *       - BearerAuth: []
-   *       - ApiKeyAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/PatientRegistration'
-   *     responses:
-   *       201:
-   *         description: Patient registered successfully
-   *       400:
-   *         description: Validation error
-   *       401:
-   *         description: Authentication required
-   *       403:
-   *         description: Insufficient permissions
-   */
   apiRouter.post('/patients', healthController.registerPatient);
-
-  /**
-   * @swagger
-   * /api/v1/appointments:
-   *   post:
-   *     summary: Schedule an appointment
-   *     tags: [Appointments]
-   *     security:
-   *       - BearerAuth: []
-   *       - ApiKeyAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/AppointmentScheduling'
-   *     responses:
-   *       201:
-   *         description: Appointment scheduled successfully
-   *       400:
-   *         description: Validation error
-   *       401:
-   *         description: Authentication required
-   *       403:
-   *         description: Insufficient permissions
-   */
   apiRouter.post('/appointments', healthController.scheduleAppointment);
-
-  /**
-   * @swagger
-   * /api/v1/vitals:
-   *   post:
-   *     summary: Record vital signs
-   *     tags: [Vitals]
-   *     security:
-   *       - BearerAuth: []
-   *       - ApiKeyAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/VitalSigns'
-   *     responses:
-   *       201:
-   *         description: Vital signs recorded successfully
-   *       400:
-   *         description: Validation error
-   *       401:
-   *         description: Authentication required
-   *       403:
-   *         description: Insufficient permissions
-   */
   apiRouter.post('/vitals', healthController.recordVitalSigns);
-
-  /**
-   * @swagger
-   * /api/v1/notifications:
-   *   post:
-   *     summary: Send clinical notification
-   *     tags: [Notifications]
-   *     security:
-   *       - BearerAuth: []
-   *       - ApiKeyAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/ClinicalNotification'
-   *     responses:
-   *       201:
-   *         description: Notification sent successfully
-   *       400:
-   *         description: Validation error
-   *       401:
-   *         description: Authentication required
-   *       403:
-   *         description: Insufficient permissions
-   */
   apiRouter.post('/notifications', healthController.sendNotification);
-
-  /**
-   * @swagger
-   * /api/v1/lab-results:
-   *   post:
-   *     summary: Report lab results
-   *     tags: [Lab Results]
-   *     security:
-   *       - BearerAuth: []
-   *       - ApiKeyAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/LabResults'
-   *     responses:
-   *       201:
-   *         description: Lab results reported successfully
-   *       400:
-   *         description: Validation error
-   *       401:
-   *         description: Authentication required
-   *       403:
-   *         description: Insufficient permissions
-   */
   apiRouter.post('/lab-results', healthController.reportLabResults);
-
-  /**
-   * @swagger
-   * /api/v1/medications:
-   *   post:
-   *     summary: Prescribe medication
-   *     tags: [Medications]
-   *     security:
-   *       - BearerAuth: []
-   *       - ApiKeyAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             $ref: '#/components/schemas/MedicationPrescription'
-   *     responses:
-   *       201:
-   *         description: Medication prescribed successfully
-   *       400:
-   *         description: Validation error
-   *       401:
-   *         description: Authentication required
-   *       403:
-   *         description: Insufficient permissions
-   */
   apiRouter.post('/medications', healthController.prescribeMedication);
 
   // Mount API router

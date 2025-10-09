@@ -23,8 +23,84 @@ export class HealthController {
   constructor(private healthEventService: HealthEventService) {}
 
   /**
-   * Register a new patient
-   * POST /api/v1/patients
+   * @swagger
+   * /api/v1/patients:
+   *   post:
+   *     summary: Register a new patient
+   *     tags: [Patients]
+   *     security:
+   *       - BearerAuth: []
+   *       - ApiKeyAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [patientId, firstName, lastName, dateOfBirth, gender, registrationDate, facilityId, registeredBy, status]
+   *             properties:
+   *               patientId:
+   *                 type: string
+   *                 example: "PAT-TEST-001"
+   *               firstName:
+   *                 type: string
+   *                 example: "John"
+   *               lastName:
+   *                 type: string
+   *                 example: "Doe"
+   *               dateOfBirth:
+   *                 type: string
+   *                 format: date
+   *                 example: "1990-01-15"
+   *               gender:
+   *                 type: string
+   *                 enum: [male, female, other]
+   *                 example: "male"
+   *               phoneNumber:
+   *                 type: string
+   *                 example: "555-0123"
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: "john.doe@example.com"
+   *               registrationDate:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-15T10:00:00Z"
+   *               facilityId:
+   *                 type: string
+   *                 example: "facility-001"
+   *               registeredBy:
+   *                 type: string
+   *                 example: "user-123"
+   *               status:
+   *                 type: string
+   *                 enum: [active, inactive]
+   *                 example: "active"
+   *     responses:
+   *       201:
+   *         description: Patient registered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                 patientId:
+   *                   type: string
+   *                 registrationDate:
+   *                   type: string
+   *                 correlationId:
+   *                   type: string
+   *                 timestamp:
+   *                   type: string
+   *       400:
+   *         description: Validation error
+   *       401:
+   *         description: Authentication required
+   *       403:
+   *         description: Insufficient permissions
    */
   public registerPatient = async (req: AuditRequest, res: Response): Promise<void> => {
     try {
@@ -92,8 +168,64 @@ export class HealthController {
   };
 
   /**
-   * Schedule an appointment
-   * POST /api/v1/appointments
+   * @swagger
+   * /api/v1/appointments:
+   *   post:
+   *     summary: Schedule an appointment
+   *     tags: [Appointments]
+   *     security:
+   *       - BearerAuth: []
+   *       - ApiKeyAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [appointmentId, patientId, providerId, appointmentDateTime, appointmentType, facilityId, scheduledBy]
+   *             properties:
+   *               appointmentId:
+   *                 type: string
+   *                 example: "APT-001"
+   *               patientId:
+   *                 type: string
+   *                 example: "PAT-001"
+   *               providerId:
+   *                 type: string
+   *                 example: "PROV-001"
+   *               appointmentDateTime:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-20T10:00:00Z"
+   *               appointmentType:
+   *                 type: string
+   *                 enum: [consultation, followup, procedure, emergency]
+   *                 example: "consultation"
+   *               duration:
+   *                 type: number
+   *                 example: 30
+   *               status:
+   *                 type: string
+   *                 enum: [scheduled, confirmed, cancelled, completed]
+   *                 example: "scheduled"
+   *               reasonForVisit:
+   *                 type: string
+   *                 example: "Annual checkup"
+   *               facilityId:
+   *                 type: string
+   *                 example: "facility-001"
+   *               scheduledBy:
+   *                 type: string
+   *                 example: "user-123"
+   *     responses:
+   *       201:
+   *         description: Appointment scheduled successfully
+   *       400:
+   *         description: Validation error
+   *       401:
+   *         description: Authentication required
+   *       403:
+   *         description: Insufficient permissions
    */
   public scheduleAppointment = async (req: AuditRequest, res: Response): Promise<void> => {
     try {
@@ -155,8 +287,113 @@ export class HealthController {
   };
 
   /**
-   * Record vital signs
-   * POST /api/v1/vitals
+   * @swagger
+   * /api/v1/vitals:
+   *   post:
+   *     summary: Record vital signs
+   *     tags: [Vitals]
+   *     security:
+   *       - BearerAuth: []
+   *       - ApiKeyAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [recordId, patientId, vitalSigns, recordedDateTime, facilityId, recordedBy]
+   *             properties:
+   *               recordId:
+   *                 type: string
+   *                 example: "VIT-001"
+   *               patientId:
+   *                 type: string
+   *                 example: "PAT-001"
+   *               vitalSigns:
+   *                 type: object
+   *                 properties:
+   *                   temperature:
+   *                     type: object
+   *                     properties:
+   *                       value:
+   *                         type: number
+   *                         example: 98.6
+   *                       unit:
+   *                         type: string
+   *                         example: "F"
+   *                   bloodPressure:
+   *                     type: object
+   *                     properties:
+   *                       systolic:
+   *                         type: number
+   *                         example: 120
+   *                       diastolic:
+   *                         type: number
+   *                         example: 80
+   *                       unit:
+   *                         type: string
+   *                         example: "mmHg"
+   *                   heartRate:
+   *                     type: object
+   *                     properties:
+   *                       value:
+   *                         type: number
+   *                         example: 72
+   *                       unit:
+   *                         type: string
+   *                         example: "bpm"
+   *                   respiratoryRate:
+   *                     type: object
+   *                     properties:
+   *                       value:
+   *                         type: number
+   *                         example: 16
+   *                       unit:
+   *                         type: string
+   *                         example: "breaths/min"
+   *                   oxygenSaturation:
+   *                     type: object
+   *                     properties:
+   *                       value:
+   *                         type: number
+   *                         example: 98
+   *                       unit:
+   *                         type: string
+   *                         example: "%"
+   *               recordedDateTime:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-15T10:00:00Z"
+   *               facilityId:
+   *                 type: string
+   *                 example: "facility-001"
+   *               recordedBy:
+   *                 type: string
+   *                 example: "user-123"
+   *               deviceInfo:
+   *                 type: object
+   *                 properties:
+   *                   deviceId:
+   *                     type: string
+   *                     example: "DEV-001"
+   *                   deviceType:
+   *                     type: string
+   *                     example: "vital-signs-monitor"
+   *                   manufacturer:
+   *                     type: string
+   *                     example: "MedDevice Corp"
+   *               notes:
+   *                 type: string
+   *                 example: "Patient was resting during measurement"
+   *     responses:
+   *       201:
+   *         description: Vital signs recorded successfully
+   *       400:
+   *         description: Validation error
+   *       401:
+   *         description: Authentication required
+   *       403:
+   *         description: Insufficient permissions
    */
   public recordVitalSigns = async (req: AuditRequest, res: Response): Promise<void> => {
     try {
@@ -216,8 +453,82 @@ export class HealthController {
   };
 
   /**
-   * Send clinical notification
-   * POST /api/v1/notifications
+   * @swagger
+   * /api/v1/notifications:
+   *   post:
+   *     summary: Send clinical notification
+   *     tags: [Notifications]
+   *     security:
+   *       - BearerAuth: []
+   *       - ApiKeyAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [notificationId, type, recipientType, recipientId, message, sentBy, facilityId]
+   *             properties:
+   *               notificationId:
+   *                 type: string
+   *                 example: "NOT-001"
+   *               type:
+   *                 type: string
+   *                 enum: [alert, reminder, update, emergency, result]
+   *                 example: "alert"
+   *               recipientType:
+   *                 type: string
+   *                 enum: [patient, provider, staff, external]
+   *                 example: "provider"
+   *               recipientId:
+   *                 type: string
+   *                 example: "PROV-001"
+   *               message:
+   *                 type: string
+   *                 example: "Lab results are ready for review"
+   *               priority:
+   *                 type: string
+   *                 enum: [low, normal, high, urgent]
+   *                 example: "normal"
+   *               patientId:
+   *                 type: string
+   *                 example: "PAT-001"
+   *               relatedRecord:
+   *                 type: object
+   *                 properties:
+   *                   recordType:
+   *                     type: string
+   *                     example: "lab-result"
+   *                   recordId:
+   *                     type: string
+   *                     example: "LAB-001"
+   *               sentDateTime:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-15T10:00:00Z"
+   *               sentBy:
+   *                 type: string
+   *                 example: "user-123"
+   *               facilityId:
+   *                 type: string
+   *                 example: "facility-001"
+   *               readStatus:
+   *                 type: string
+   *                 enum: [unread, read, acknowledged]
+   *                 example: "unread"
+   *               expiryDateTime:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-30T10:00:00Z"
+   *     responses:
+   *       201:
+   *         description: Notification sent successfully
+   *       400:
+   *         description: Validation error
+   *       401:
+   *         description: Authentication required
+   *       403:
+   *         description: Insufficient permissions
    */
   public sendNotification = async (req: AuditRequest, res: Response): Promise<void> => {
     try {
@@ -284,8 +595,111 @@ export class HealthController {
   };
 
   /**
-   * Report lab results
-   * POST /api/v1/lab-results
+   * @swagger
+   * /api/v1/lab-results:
+   *   post:
+   *     summary: Report lab results
+   *     tags: [Lab Results]
+   *     security:
+   *       - BearerAuth: []
+   *       - ApiKeyAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [resultId, patientId, orderId, labName, testName, resultDateTime, reportedBy, facilityId]
+   *             properties:
+   *               resultId:
+   *                 type: string
+   *                 example: "LAB-001"
+   *               patientId:
+   *                 type: string
+   *                 example: "PAT-001"
+   *               orderId:
+   *                 type: string
+   *                 example: "ORD-001"
+   *               labName:
+   *                 type: string
+   *                 example: "City Medical Lab"
+   *               testName:
+   *                 type: string
+   *                 example: "Complete Blood Count"
+   *               testCode:
+   *                 type: string
+   *                 example: "CBC"
+   *               specimen:
+   *                 type: object
+   *                 properties:
+   *                   type:
+   *                     type: string
+   *                     example: "blood"
+   *                   collectionDateTime:
+   *                     type: string
+   *                     format: date-time
+   *                     example: "2024-01-14T08:00:00Z"
+   *                   volume:
+   *                     type: string
+   *                     example: "5ml"
+   *               results:
+   *                 type: array
+   *                 items:
+   *                   type: object
+   *                   properties:
+   *                     testComponent:
+   *                       type: string
+   *                       example: "White Blood Cells"
+   *                     value:
+   *                       type: string
+   *                       example: "7.2"
+   *                     unit:
+   *                       type: string
+   *                       example: "K/uL"
+   *                     referenceRange:
+   *                       type: string
+   *                       example: "4.0-11.0"
+   *                     status:
+   *                       type: string
+   *                       enum: [normal, abnormal, critical, pending]
+   *                       example: "normal"
+   *                     comments:
+   *                       type: string
+   *                       example: "Within normal limits"
+   *               overallStatus:
+   *                 type: string
+   *                 enum: [completed, partial, pending, cancelled]
+   *                 example: "completed"
+   *               resultDateTime:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-15T10:00:00Z"
+   *               reportedBy:
+   *                 type: string
+   *                 example: "lab-tech-001"
+   *               reviewedBy:
+   *                 type: string
+   *                 example: "dr-smith"
+   *               facilityId:
+   *                 type: string
+   *                 example: "facility-001"
+   *               criticalFlags:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 example: ["high_glucose"]
+   *               clinicalComments:
+   *                 type: string
+   *                 example: "Patient should follow up with primary care"
+   *     responses:
+   *       201:
+   *         description: Lab results reported successfully
+   *       400:
+   *         description: Validation error
+   *       401:
+   *         description: Authentication required
+   *       403:
+   *         description: Insufficient permissions
    */
   public reportLabResults = async (req: AuditRequest, res: Response): Promise<void> => {
     try {
@@ -348,8 +762,121 @@ export class HealthController {
   };
 
   /**
-   * Prescribe medication
-   * POST /api/v1/medications
+   * @swagger
+   * /api/v1/medications:
+   *   post:
+   *     summary: Prescribe medication
+   *     tags: [Medications]
+   *     security:
+   *       - BearerAuth: []
+   *       - ApiKeyAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [medicationId, patientId, prescriberId, medication, dosage, instructions, prescriptionDate, facilityId]
+   *             properties:
+   *               medicationId:
+   *                 type: string
+   *                 example: "MED-001"
+   *               patientId:
+   *                 type: string
+   *                 example: "PAT-001"
+   *               prescriberId:
+   *                 type: string
+   *                 example: "PROV-001"
+   *               medication:
+   *                 type: object
+   *                 properties:
+   *                   name:
+   *                     type: string
+   *                     example: "Amoxicillin"
+   *                   genericName:
+   *                     type: string
+   *                     example: "Amoxicillin"
+   *                   brandName:
+   *                     type: string
+   *                     example: "Amoxil"
+   *                   strength:
+   *                     type: string
+   *                     example: "500mg"
+   *                   form:
+   *                     type: string
+   *                     example: "tablet"
+   *                   ndc:
+   *                     type: string
+   *                     example: "12345-678-90"
+   *               dosage:
+   *                 type: object
+   *                 properties:
+   *                   amount:
+   *                     type: string
+   *                     example: "500mg"
+   *                   frequency:
+   *                     type: string
+   *                     example: "twice daily"
+   *                   route:
+   *                     type: string
+   *                     example: "oral"
+   *                   duration:
+   *                     type: string
+   *                     example: "10 days"
+   *               instructions:
+   *                 type: string
+   *                 example: "Take with food. Complete full course."
+   *               quantity:
+   *                 type: number
+   *                 example: 20
+   *               refills:
+   *                 type: number
+   *                 example: 0
+   *               prescriptionDate:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-15T10:00:00Z"
+   *               startDate:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-15T10:00:00Z"
+   *               endDate:
+   *                 type: string
+   *                 format: date-time
+   *                 example: "2024-01-25T10:00:00Z"
+   *               facilityId:
+   *                 type: string
+   *                 example: "facility-001"
+   *               indication:
+   *                 type: string
+   *                 example: "Bacterial infection"
+   *               allergies:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 example: ["penicillin"]
+   *               interactions:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                 example: ["warfarin"]
+   *               status:
+   *                 type: string
+   *                 enum: [active, discontinued, completed, suspended]
+   *                 example: "active"
+   *               priority:
+   *                 type: string
+   *                 enum: [routine, urgent, stat]
+   *                 example: "routine"
+   *     responses:
+   *       201:
+   *         description: Medication prescribed successfully
+   *       400:
+   *         description: Validation error
+   *       401:
+   *         description: Authentication required
+   *       403:
+   *         description: Insufficient permissions
    */
   public prescribeMedication = async (req: AuditRequest, res: Response): Promise<void> => {
     try {
