@@ -9,7 +9,7 @@ import {
   OrderError,
   OrderNotFoundError,
   InvalidStateTransitionError,
-  OrderNotEditableError
+  OrderNotEditableError,
 } from '../order.service';
 import { OrderEventService } from '../order-event.service';
 import { OrderStatus, OrderType, OrderPriority } from '../../types/order-status';
@@ -22,8 +22,8 @@ jest.mock('@smile/common', () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
-  }
+    debug: jest.fn(),
+  },
 }));
 
 describe('OrderService', () => {
@@ -44,7 +44,7 @@ describe('OrderService', () => {
       emitOrderFulfilled: jest.fn().mockResolvedValue(undefined),
       emitOrderReturned: jest.fn().mockResolvedValue(undefined),
       initialize: jest.fn().mockResolvedValue(undefined),
-      close: jest.fn().mockResolvedValue(undefined)
+      close: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     orderService = new OrderService(mockEventService);
@@ -67,16 +67,16 @@ describe('OrderService', () => {
           name: 'Paracetamol 500mg',
           category: 'Pharmaceuticals',
           unitOfMeasure: 'box',
-          quantityOrdered: 10
-        }
+          quantityOrdered: 10,
+        },
       ],
       deliveryAddress: {
         street: '123 Hospital Drive',
         city: 'Medical City',
         state: 'CA',
         zipCode: '90210',
-        country: 'USA'
-      }
+        country: 'USA',
+      },
     };
 
     it('should create order successfully with all required fields', async () => {
@@ -101,7 +101,7 @@ describe('OrderService', () => {
         order,
         'user-123',
         'corr-123',
-        'sess-123'
+        'sess-123',
       );
     });
 
@@ -110,8 +110,8 @@ describe('OrderService', () => {
         ...validCreateRequest,
         items: [
           { name: 'Item 1', category: 'Cat1', unitOfMeasure: 'unit', quantityOrdered: 1 },
-          { name: 'Item 2', category: 'Cat2', unitOfMeasure: 'unit', quantityOrdered: 2 }
-        ]
+          { name: 'Item 2', category: 'Cat2', unitOfMeasure: 'unit', quantityOrdered: 2 },
+        ],
       };
 
       const order = await orderService.createOrder(requestWithMultipleItems, 'user-123');
@@ -128,8 +128,8 @@ describe('OrderService', () => {
         vendor: {
           vendorName: 'Medical Supplies Inc',
           contactPerson: 'John Vendor',
-          email: 'vendor@example.com'
-        }
+          email: 'vendor@example.com',
+        },
       };
 
       const order = await orderService.createOrder(requestWithVendor, 'user-123');
@@ -144,7 +144,7 @@ describe('OrderService', () => {
         ...validCreateRequest,
         notes: 'Urgent order',
         tags: ['urgent', 'medical'],
-        customFields: { projectCode: 'PROJ-001' }
+        customFields: { projectCode: 'PROJ-001' },
       };
 
       const order = await orderService.createOrder(requestWithOptionals, 'user-123');
@@ -179,8 +179,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       const retrieved = await orderService.getOrder(created.orderId);
@@ -191,7 +191,7 @@ describe('OrderService', () => {
 
     it('should throw OrderNotFoundError when order does not exist', async () => {
       await expect(
-        orderService.getOrder('non-existent-id')
+        orderService.getOrder('non-existent-id'),
       ).rejects.toThrow(OrderNotFoundError);
     });
 
@@ -220,13 +220,13 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       const updateRequest: UpdateOrderRequest = {
         priority: OrderPriority.HIGH,
-        notes: 'Updated notes'
+        notes: 'Updated notes',
       };
 
       const updated = await orderService.updateOrder(created.orderId, updateRequest, 'user-456');
@@ -251,12 +251,12 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       const updateRequest: UpdateOrderRequest = {
-        priority: OrderPriority.HIGH
+        priority: OrderPriority.HIGH,
       };
 
       await orderService.updateOrder(created.orderId, updateRequest, 'user-456', 'corr-123', 'sess-123');
@@ -280,8 +280,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       // Submit the order
@@ -289,7 +289,7 @@ describe('OrderService', () => {
 
       // Try to update
       await expect(
-        orderService.updateOrder(created.orderId, { priority: OrderPriority.HIGH }, 'user-123')
+        orderService.updateOrder(created.orderId, { priority: OrderPriority.HIGH }, 'user-123'),
       ).rejects.toThrow(OrderNotEditableError);
     });
 
@@ -306,22 +306,22 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       // Submit and reject
       await orderService.submitOrder(created.orderId, 'user-123');
       await orderService.rejectOrder(
         created.orderId,
-        { rejectionReason: 'Budget constraints need more information', userId: 'approver-123' }
+        { rejectionReason: 'Budget constraints need more information', userId: 'approver-123' },
       );
 
       // Should now be in DRAFT state after rejection workflow, so update should work
       const updated = await orderService.updateOrder(
         created.orderId,
         { priority: OrderPriority.LOW },
-        'user-123'
+        'user-123',
       );
 
       expect(updated.priority).toBe(OrderPriority.LOW);
@@ -342,14 +342,14 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       await orderService.deleteOrder(created.orderId, 'Duplicate order', 'user-123');
 
       await expect(
-        orderService.getOrder(created.orderId)
+        orderService.getOrder(created.orderId),
       ).rejects.toThrow(OrderNotFoundError);
     });
 
@@ -366,8 +366,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       await orderService.deleteOrder(created.orderId, 'Duplicate', 'user-123', 'corr-123', 'sess-123');
@@ -377,7 +377,7 @@ describe('OrderService', () => {
         'Duplicate',
         'user-123',
         'corr-123',
-        'sess-123'
+        'sess-123',
       );
     });
 
@@ -394,14 +394,14 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       await orderService.submitOrder(created.orderId, 'user-123');
 
       await expect(
-        orderService.deleteOrder(created.orderId, 'Changed mind', 'user-123')
+        orderService.deleteOrder(created.orderId, 'Changed mind', 'user-123'),
       ).rejects.toThrow(OrderError);
     });
   });
@@ -421,9 +421,9 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
+          country: 'USA',
         },
-        tags: ['urgent']
+        tags: ['urgent'],
       }, 'user-123');
 
       await orderService.createOrder({
@@ -438,8 +438,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-456');
     });
 
@@ -516,8 +516,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
     });
 
@@ -540,7 +540,7 @@ describe('OrderService', () => {
         await orderService.submitOrder(testOrder.orderId, 'user-123');
 
         await expect(
-          orderService.submitOrder(testOrder.orderId, 'user-123')
+          orderService.submitOrder(testOrder.orderId, 'user-123'),
         ).rejects.toThrow(InvalidStateTransitionError);
       });
     });
@@ -551,7 +551,7 @@ describe('OrderService', () => {
         const approved = await orderService.approveOrder(
           testOrder.orderId,
           'Approved for procurement',
-          'approver-123'
+          'approver-123',
         );
 
         expect(approved.status).toBe(OrderStatus.APPROVED);
@@ -565,7 +565,7 @@ describe('OrderService', () => {
           'Approved',
           'approver-123',
           'corr-123',
-          'sess-123'
+          'sess-123',
         );
 
         expect(mockEventService.emitOrderApproved).toHaveBeenCalledWith(
@@ -573,13 +573,13 @@ describe('OrderService', () => {
           expect.objectContaining({ approvedBy: 'approver-123', notes: 'Approved' }),
           'approver-123',
           'corr-123',
-          'sess-123'
+          'sess-123',
         );
       });
 
       it('should not allow approving draft order', async () => {
         await expect(
-          orderService.approveOrder(testOrder.orderId, 'Approved', 'approver-123')
+          orderService.approveOrder(testOrder.orderId, 'Approved', 'approver-123'),
         ).rejects.toThrow(InvalidStateTransitionError);
       });
     });
@@ -589,7 +589,7 @@ describe('OrderService', () => {
         await orderService.submitOrder(testOrder.orderId, 'user-123');
         const rejected = await orderService.rejectOrder(
           testOrder.orderId,
-          { rejectionReason: 'Budget constraints require additional approval', userId: 'approver-123' }
+          { rejectionReason: 'Budget constraints require additional approval', userId: 'approver-123' },
         );
 
         expect(rejected.rejectionReason).toBe('Budget constraints require additional approval');
@@ -601,7 +601,7 @@ describe('OrderService', () => {
         await orderService.submitOrder(testOrder.orderId, 'user-123');
         await orderService.rejectOrder(
           testOrder.orderId,
-          { rejectionReason: 'Need more details about requirements', userId: 'approver-123' }
+          { rejectionReason: 'Need more details about requirements', userId: 'approver-123' },
         );
 
         // Check the order is back in DRAFT state for editing
@@ -615,7 +615,7 @@ describe('OrderService', () => {
           testOrder.orderId,
           { rejectionReason: 'Insufficient justification provided', userId: 'approver-123', notes: 'Need cost analysis' },
           'corr-123',
-          'sess-123'
+          'sess-123',
         );
 
         expect(mockEventService.emitOrderRejected).toHaveBeenCalled();
@@ -640,7 +640,7 @@ describe('OrderService', () => {
         order = await orderService.shipOrder(
           order.orderId,
           { trackingNumber: 'TRACK123', carrier: 'FedEx' },
-          'warehouse-123'
+          'warehouse-123',
         );
         expect(order.status).toBe(OrderStatus.SHIPPED);
         expect(order.deliveryInfo?.trackingNumber).toBe('TRACK123');
@@ -649,7 +649,7 @@ describe('OrderService', () => {
         order = await orderService.receiveOrder(
           order.orderId,
           { receivedBy: 'staff-456', deliveredBy: 'FedEx Driver' },
-          'receiver-123'
+          'receiver-123',
         );
         expect(order.status).toBe(OrderStatus.RECEIVED);
         expect(order.deliveryInfo?.actualDeliveryDate).toBeDefined();
@@ -658,7 +658,7 @@ describe('OrderService', () => {
         order = await orderService.fulfillOrder(
           order.orderId,
           { satisfactionRating: 9, completionNotes: 'Excellent quality' },
-          'requester-123'
+          'requester-123',
         );
         expect(order.status).toBe(OrderStatus.FULFILLED);
 
@@ -676,12 +676,12 @@ describe('OrderService', () => {
         await orderService.shipOrder(
           testOrder.orderId,
           { trackingNumber: 'TRACK123' },
-          'warehouse-123'
+          'warehouse-123',
         );
         let order = await orderService.receiveOrder(
           testOrder.orderId,
           { receivedBy: 'staff-456' },
-          'receiver-123'
+          'receiver-123',
         );
 
         // Initiate return
@@ -694,11 +694,11 @@ describe('OrderService', () => {
               {
                 itemId: order.items[0]?.itemId || 'fallback-id',
                 quantityReturned: 1,
-                condition: 'Damaged packaging'
-              }
+                condition: 'Damaged packaging',
+              },
             ],
-            userId: 'receiver-123'
-          }
+            userId: 'receiver-123',
+          },
         );
 
         expect(order.status).toBe(OrderStatus.RETURNED);
@@ -718,9 +718,9 @@ describe('OrderService', () => {
               returnReason: 'Changed mind about requirements',
               returnType: 'not_needed',
               returnedItems: [{ itemId: testOrder.items[0].itemId, quantityReturned: 1, condition: 'New' }],
-              userId: 'user-123'
-            }
-          )
+              userId: 'user-123',
+            },
+          ),
         ).rejects.toThrow(InvalidStateTransitionError);
       });
     });
@@ -740,8 +740,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       const nextStates = orderService.getNextStates(order);
@@ -762,8 +762,8 @@ describe('OrderService', () => {
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       }, 'user-123');
 
       // Complete full workflow

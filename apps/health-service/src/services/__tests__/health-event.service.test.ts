@@ -114,7 +114,7 @@ describe('HealthEventService', () => {
         patientData,
         'user-123',
         'correlation-123',
-        'session-123'
+        'session-123',
       );
 
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
@@ -137,7 +137,7 @@ describe('HealthEventService', () => {
               dataClassification: 'restricted',
             }),
           }),
-        })
+        }),
       );
 
       expect(auditLogger.logPHIAccess).toHaveBeenCalledWith(
@@ -149,7 +149,7 @@ describe('HealthEventService', () => {
           correlationId: 'correlation-123',
           service: 'health-service',
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -174,7 +174,7 @@ describe('HealthEventService', () => {
       mockEventEmitter.emit.mockRejectedValue(new Error('Emit failed'));
 
       await expect(
-        service.emitPatientRegistration(patientData, 'user-123', 'correlation-123')
+        service.emitPatientRegistration(patientData, 'user-123', 'correlation-123'),
       ).rejects.toThrow('Emit failed');
 
       expect(auditLogger.logSecurityEvent).toHaveBeenCalledWith(
@@ -189,7 +189,7 @@ describe('HealthEventService', () => {
         expect.objectContaining({
           eventType: HealthEventType.PATIENT_REGISTERED,
           error: 'Emit failed',
-        })
+        }),
       );
     });
 
@@ -247,7 +247,7 @@ describe('HealthEventService', () => {
         expect.objectContaining({
           type: HealthEventType.APPOINTMENT_SCHEDULED,
           subject: 'appointment/APT-001',
-        })
+        }),
       );
     });
 
@@ -291,7 +291,7 @@ describe('HealthEventService', () => {
         expect.objectContaining({
           type: HealthEventType.VITAL_SIGNS_RECORDED,
           subject: 'vitals/VIT-001',
-        })
+        }),
       );
     });
 
@@ -364,7 +364,7 @@ describe('HealthEventService', () => {
         'event-emission',
         'PAT-001', // Should extract patientId as resource ID
         expect.any(Object),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

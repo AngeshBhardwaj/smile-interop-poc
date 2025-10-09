@@ -309,104 +309,104 @@ export const ORDER_EVENT_ROUTING: Record<OrderEventType, OrderEventRouting> = {
     routingKey: 'orders.lifecycle.created',
     exchange: 'orders.events',
     priority: 5,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_UPDATED]: {
     eventType: OrderEventType.ORDER_UPDATED,
     routingKey: 'orders.lifecycle.updated',
     exchange: 'orders.events',
     priority: 3,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_DELETED]: {
     eventType: OrderEventType.ORDER_DELETED,
     routingKey: 'orders.lifecycle.deleted',
     exchange: 'orders.events',
     priority: 4,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_SUBMITTED]: {
     eventType: OrderEventType.ORDER_SUBMITTED,
     routingKey: 'orders.workflow.submitted',
     exchange: 'orders.events',
     priority: 6,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_APPROVED]: {
     eventType: OrderEventType.ORDER_APPROVED,
     routingKey: 'orders.workflow.approved',
     exchange: 'orders.events',
     priority: 7,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_REJECTED]: {
     eventType: OrderEventType.ORDER_REJECTED,
     routingKey: 'orders.workflow.rejected',
     exchange: 'orders.events',
     priority: 6,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_PACKED]: {
     eventType: OrderEventType.ORDER_PACKED,
     routingKey: 'orders.fulfillment.packed',
     exchange: 'orders.events',
     priority: 5,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_SHIPPED]: {
     eventType: OrderEventType.ORDER_SHIPPED,
     routingKey: 'orders.fulfillment.shipped',
     exchange: 'orders.events',
     priority: 7,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_RECEIVED]: {
     eventType: OrderEventType.ORDER_RECEIVED,
     routingKey: 'orders.fulfillment.received',
     exchange: 'orders.events',
     priority: 6,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_FULFILLED]: {
     eventType: OrderEventType.ORDER_FULFILLED,
     routingKey: 'orders.fulfillment.fulfilled',
     exchange: 'orders.events',
     priority: 5,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_RETURNED]: {
     eventType: OrderEventType.ORDER_RETURNED,
     routingKey: 'orders.returns.initiated',
     exchange: 'orders.events',
     priority: 7,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_RETURN_COMPLETED]: {
     eventType: OrderEventType.ORDER_RETURN_COMPLETED,
     routingKey: 'orders.returns.completed',
     exchange: 'orders.events',
     priority: 5,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_OVERDUE]: {
     eventType: OrderEventType.ORDER_OVERDUE,
     routingKey: 'orders.alerts.overdue',
     exchange: 'orders.events',
     priority: 8,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_URGENT_REMINDER]: {
     eventType: OrderEventType.ORDER_URGENT_REMINDER,
     routingKey: 'orders.alerts.urgent',
     exchange: 'orders.events',
     priority: 9,
-    deliveryMode: 2
+    deliveryMode: 2,
   },
   [OrderEventType.ORDER_BUDGET_EXCEEDED]: {
     eventType: OrderEventType.ORDER_BUDGET_EXCEEDED,
     routingKey: 'orders.alerts.budget',
     exchange: 'orders.events',
     priority: 8,
-    deliveryMode: 2
-  }
+    deliveryMode: 2,
+  },
 };

@@ -27,8 +27,8 @@ describe('Order Validators', () => {
           unitOfMeasure: 'box',
           quantityOrdered: 10,
           unitPrice: 5.99,
-          totalPrice: 59.90
-        }
+          totalPrice: 59.90,
+        },
       ],
       deliveryAddress: {
         street: '123 Hospital Drive',
@@ -39,10 +39,10 @@ describe('Order Validators', () => {
         buildingName: 'Main Building',
         floor: '3rd Floor',
         room: 'Pharmacy Storage',
-        deliveryInstructions: 'Use service elevator'
+        deliveryInstructions: 'Use service elevator',
       },
       notes: 'Urgent requirement for emergency department',
-      tags: ['emergency', 'pharmaceutical']
+      tags: ['emergency', 'pharmaceutical'],
     };
 
     it('should validate valid order creation data', () => {
@@ -101,7 +101,7 @@ describe('Order Validators', () => {
     it('should reject order with requiredDate in the past', () => {
       const invalidData = {
         ...validOrderData,
-        requiredDate: new Date(Date.now() - 86400000).toISOString() // yesterday
+        requiredDate: new Date(Date.now() - 86400000).toISOString(), // yesterday
       };
 
       expect(() => validators.createOrder(invalidData)).toThrow(/Required date must be in the future/);
@@ -110,7 +110,7 @@ describe('Order Validators', () => {
     it('should reject order with requiredDate being now', () => {
       const invalidData = {
         ...validOrderData,
-        requiredDate: new Date().toISOString()
+        requiredDate: new Date().toISOString(),
       };
 
       expect(() => validators.createOrder(invalidData)).toThrow(/Required date must be in the future/);
@@ -133,8 +133,8 @@ describe('Order Validators', () => {
           contactPerson: 'John Vendor',
           phoneNumber: '+14155551234',
           email: 'vendor@example.com',
-          accountNumber: 'ACC-12345'
-        }
+          accountNumber: 'ACC-12345',
+        },
       };
 
       const result = validators.createOrder(dataWithVendor);
@@ -146,7 +146,7 @@ describe('Order Validators', () => {
     it('should reject items with quantity less than 1', () => {
       const invalidData = {
         ...validOrderData,
-        items: [{ ...validOrderData.items[0], quantityOrdered: 0 }]
+        items: [{ ...validOrderData.items[0], quantityOrdered: 0 }],
       };
 
       expect(() => validators.createOrder(invalidData)).toThrow(/Validation failed/);
@@ -155,7 +155,7 @@ describe('Order Validators', () => {
     it('should reject items with negative price', () => {
       const invalidData = {
         ...validOrderData,
-        items: [{ ...validOrderData.items[0], unitPrice: -5.99 }]
+        items: [{ ...validOrderData.items[0], unitPrice: -5.99 }],
       };
 
       expect(() => validators.createOrder(invalidData)).toThrow(/Validation failed/);
@@ -170,8 +170,8 @@ describe('Order Validators', () => {
           shippingCost: 15.00,
           discountAmount: 5.00,
           totalAmount: 120.00,
-          currency: 'USD'
-        }
+          currency: 'USD',
+        },
       };
 
       const result = validators.createOrder(dataWithFinancials);
@@ -188,8 +188,8 @@ describe('Order Validators', () => {
           shippingCost: 15.00,
           discountAmount: 5.00,
           totalAmount: 200.00, // Wrong calculation
-          currency: 'USD'
-        }
+          currency: 'USD',
+        },
       };
 
       expect(() => validators.createOrder(dataWithBadFinancials)).toThrow(/Total amount does not match calculated value/);
@@ -198,7 +198,7 @@ describe('Order Validators', () => {
     it('should accept valid tags array', () => {
       const dataWithTags = {
         ...validOrderData,
-        tags: ['urgent', 'high-priority', 'medical']
+        tags: ['urgent', 'high-priority', 'medical'],
       };
 
       const result = validators.createOrder(dataWithTags);
@@ -208,7 +208,7 @@ describe('Order Validators', () => {
     it('should reject more than 10 tags', () => {
       const dataWithTooManyTags = {
         ...validOrderData,
-        tags: Array(11).fill('tag')
+        tags: Array(11).fill('tag'),
       };
 
       expect(() => validators.createOrder(dataWithTooManyTags)).toThrow(/Validation failed/);
@@ -220,8 +220,8 @@ describe('Order Validators', () => {
         customFields: {
           projectCode: 'PROJ-001',
           costCenter: 'CC-123',
-          metadata: { foo: 'bar' }
-        }
+          metadata: { foo: 'bar' },
+        },
       };
 
       const result = validators.createOrder(dataWithCustomFields);
@@ -233,7 +233,7 @@ describe('Order Validators', () => {
   describe('updateOrder validator', () => {
     it('should validate partial update with only priority', () => {
       const updateData = {
-        priority: OrderPriority.HIGH
+        priority: OrderPriority.HIGH,
       };
 
       const result = validators.updateOrder(updateData);
@@ -243,7 +243,7 @@ describe('Order Validators', () => {
     it('should validate partial update with only requiredDate', () => {
       const futureDate = new Date(Date.now() + 86400000 * 10).toISOString();
       const updateData = {
-        requiredDate: futureDate
+        requiredDate: futureDate,
       };
 
       const result = validators.updateOrder(updateData);
@@ -252,7 +252,7 @@ describe('Order Validators', () => {
 
     it('should reject requiredDate in the past for updates', () => {
       const updateData = {
-        requiredDate: new Date(Date.now() - 86400000).toISOString()
+        requiredDate: new Date(Date.now() - 86400000).toISOString(),
       };
 
       expect(() => validators.updateOrder(updateData)).toThrow(/Required date must be in the future/);
@@ -269,9 +269,9 @@ describe('Order Validators', () => {
             name: 'Updated Item',
             category: 'Medical',
             unitOfMeasure: 'unit',
-            quantityOrdered: 5
-          }
-        ]
+            quantityOrdered: 5,
+          },
+        ],
       };
 
       const result = validators.updateOrder(updateData);
@@ -286,8 +286,8 @@ describe('Order Validators', () => {
           city: 'New City',
           state: 'NY',
           zipCode: '10001',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       };
 
       const result = validators.updateOrder(updateData);
@@ -319,7 +319,7 @@ describe('Order Validators', () => {
     it('should validate date range filter', () => {
       const filters = {
         dateFrom: '2024-01-01T00:00:00Z',
-        dateTo: '2024-12-31T23:59:59Z'
+        dateTo: '2024-12-31T23:59:59Z',
       };
 
       const result = validators.orderFilters(filters);
@@ -332,7 +332,7 @@ describe('Order Validators', () => {
     it('should reject invalid date range (from >= to)', () => {
       const filters = {
         dateFrom: '2024-12-31T00:00:00Z',
-        dateTo: '2024-01-01T00:00:00Z'
+        dateTo: '2024-01-01T00:00:00Z',
       };
 
       expect(() => validators.orderFilters(filters)).toThrow(/dateFrom must be before dateTo/);
@@ -373,7 +373,7 @@ describe('Order Validators', () => {
       const rejectData = {
         rejectionReason: 'Budget constraints - need approval from finance department',
         notes: 'Will reconsider next quarter',
-        userId: 'approver-123'
+        userId: 'approver-123',
       };
 
       const result = validators.rejectOrder(rejectData);
@@ -384,7 +384,7 @@ describe('Order Validators', () => {
     it('should reject without rejection reason', () => {
       const invalidData = {
         notes: 'Some notes',
-        userId: 'approver-123'
+        userId: 'approver-123',
       };
 
       expect(() => validators.rejectOrder(invalidData)).toThrow(/Validation failed/);
@@ -393,7 +393,7 @@ describe('Order Validators', () => {
     it('should reject with too short rejection reason', () => {
       const invalidData = {
         rejectionReason: 'Short',
-        userId: 'approver-123'
+        userId: 'approver-123',
       };
 
       expect(() => validators.rejectOrder(invalidData)).toThrow(/Validation failed/);
@@ -401,7 +401,7 @@ describe('Order Validators', () => {
 
     it('should reject without userId', () => {
       const invalidData = {
-        rejectionReason: 'Valid reason with enough characters'
+        rejectionReason: 'Valid reason with enough characters',
       };
 
       expect(() => validators.rejectOrder(invalidData)).toThrow(/Validation failed/);
@@ -418,7 +418,7 @@ describe('Order Validators', () => {
     it('should validate approval with notes', () => {
       const approveData = {
         userId: 'approver-123',
-        notes: 'Approved for Q1 budget'
+        notes: 'Approved for Q1 budget',
       };
 
       const result = validators.approveOrder(approveData);
@@ -439,11 +439,11 @@ describe('Order Validators', () => {
           itemId: '550e8400-e29b-41d4-a716-446655440000', // Valid UUIDv4
           quantityReturned: 5,
           condition: 'Boxes crushed, contents compromised',
-          notes: 'Visible damage to outer packaging'
-        }
+          notes: 'Visible damage to outer packaging',
+        },
       ],
       notes: 'Will need urgent replacement',
-      userId: 'receiver-123'
+      userId: 'receiver-123',
     };
 
     it('should validate valid return request', () => {
@@ -458,7 +458,7 @@ describe('Order Validators', () => {
         'wrong_item',
         'quality_issue',
         'not_needed',
-        'expired'
+        'expired',
       ];
 
       returnTypes.forEach(returnType => {
@@ -491,9 +491,9 @@ describe('Order Validators', () => {
           {
             itemId: 'not-a-uuid',
             quantityReturned: 5,
-            condition: 'Damaged'
-          }
-        ]
+            condition: 'Damaged',
+          },
+        ],
       };
 
       expect(() => validators.returnRequest(invalidData)).toThrow(/Validation failed/);
@@ -505,9 +505,9 @@ describe('Order Validators', () => {
         returnedItems: [
           {
             ...validReturnData.returnedItems[0],
-            quantityReturned: 0
-          }
-        ]
+            quantityReturned: 0,
+          },
+        ],
       };
 
       expect(() => validators.returnRequest(invalidData)).toThrow(/Validation failed/);
@@ -520,7 +520,7 @@ describe('Order Validators', () => {
         trackingNumber: 'TRACK123456789',
         carrier: 'FedEx',
         estimatedDelivery: new Date(Date.now() + 86400000 * 3).toISOString(),
-        userId: 'warehouse-123'
+        userId: 'warehouse-123',
       };
 
       const result = validators.shippingData(shippingData);
@@ -546,7 +546,7 @@ describe('Order Validators', () => {
         receivedBy: 'staff-456',
         deliveredBy: 'FedEx Driver John',
         notes: 'All items received in good condition',
-        userId: 'receiver-123'
+        userId: 'receiver-123',
       };
 
       const result = validators.receivedData(receivedData);
@@ -557,7 +557,7 @@ describe('Order Validators', () => {
     it('should require receivedBy field', () => {
       const invalidData = {
         notes: 'Received',
-        userId: 'receiver-123'
+        userId: 'receiver-123',
       };
 
       expect(() => validators.receivedData(invalidData)).toThrow(/Validation failed/);
@@ -565,7 +565,7 @@ describe('Order Validators', () => {
 
     it('should require userId field', () => {
       const invalidData = {
-        receivedBy: 'staff-456'
+        receivedBy: 'staff-456',
       };
 
       expect(() => validators.receivedData(invalidData)).toThrow(/Validation failed/);
@@ -577,7 +577,7 @@ describe('Order Validators', () => {
       const fulfillmentData = {
         satisfactionRating: 9,
         completionNotes: 'Order completed successfully, excellent quality',
-        userId: 'requester-123'
+        userId: 'requester-123',
       };
 
       const result = validators.fulfillmentData(fulfillmentData);
@@ -593,7 +593,7 @@ describe('Order Validators', () => {
     it('should reject satisfaction rating less than 1', () => {
       const invalidData = {
         satisfactionRating: 0,
-        userId: 'requester-123'
+        userId: 'requester-123',
       };
 
       expect(() => validators.fulfillmentData(invalidData)).toThrow(/Validation failed/);
@@ -602,7 +602,7 @@ describe('Order Validators', () => {
     it('should reject satisfaction rating greater than 10', () => {
       const invalidData = {
         satisfactionRating: 11,
-        userId: 'requester-123'
+        userId: 'requester-123',
       };
 
       expect(() => validators.fulfillmentData(invalidData)).toThrow(/Validation failed/);
@@ -613,7 +613,7 @@ describe('Order Validators', () => {
     it('should validate deletion with reason', () => {
       const deleteData = {
         deletionReason: 'Duplicate order created by mistake',
-        userId: 'requester-123'
+        userId: 'requester-123',
       };
 
       const result = validators.deleteOrder(deleteData);
@@ -629,7 +629,7 @@ describe('Order Validators', () => {
     it('should reject deletion with short reason', () => {
       const invalidData = {
         deletionReason: 'Dup',
-        userId: 'requester-123'
+        userId: 'requester-123',
       };
 
       expect(() => validators.deleteOrder(invalidData)).toThrow(/Validation failed/);
@@ -649,18 +649,18 @@ describe('Order Validators', () => {
             name: 'Test Item',
             category: 'Medical',
             unitOfMeasure: 'unit',
-            quantityOrdered: 1
-          }
+            quantityOrdered: 1,
+          },
         ],
         deliveryAddress: {
           street: '123 St',
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
+          country: 'USA',
         },
         maliciousField: 'should be removed',
-        anotherBadField: { evil: 'payload' }
+        anotherBadField: { evil: 'payload' },
       } as any;
 
       const result = validators.createOrder(dataWithUnknown);
@@ -680,17 +680,17 @@ describe('Order Validators', () => {
             name: 'Test Item',
             category: 'Medical',
             unitOfMeasure: 'unit',
-            quantityOrdered: 1
-          }
+            quantityOrdered: 1,
+          },
         ],
         deliveryAddress: {
           street: '123 St',
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
+          country: 'USA',
         },
-        notes: 'x'.repeat(2001) // Exceeds 2000 character limit
+        notes: 'x'.repeat(2001), // Exceeds 2000 character limit
       };
 
       expect(() => validators.createOrder(dataWithLongNotes)).toThrow(/Validation failed/);
@@ -708,20 +708,20 @@ describe('Order Validators', () => {
             name: 'Test Item',
             category: 'Medical',
             unitOfMeasure: 'unit',
-            quantityOrdered: 1
-          }
+            quantityOrdered: 1,
+          },
         ],
         deliveryAddress: {
           street: '123 St',
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
+          country: 'USA',
         },
         vendor: {
           vendorName: 'Test Vendor',
-          email: 'not-an-email'
-        }
+          email: 'not-an-email',
+        },
       };
 
       expect(() => validators.createOrder(dataWithInvalidEmail)).toThrow(/Validation failed/);
@@ -739,20 +739,20 @@ describe('Order Validators', () => {
             name: 'Test Item',
             category: 'Medical',
             unitOfMeasure: 'unit',
-            quantityOrdered: 1
-          }
+            quantityOrdered: 1,
+          },
         ],
         deliveryAddress: {
           street: '123 St',
           city: 'City',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
+          country: 'USA',
         },
         vendor: {
           vendorName: 'Test Vendor',
-          phoneNumber: 'abc-def-ghij' // Invalid format
-        }
+          phoneNumber: 'abc-def-ghij', // Invalid format
+        },
       };
 
       expect(() => validators.createOrder(dataWithInvalidPhone)).toThrow(/Validation failed/);

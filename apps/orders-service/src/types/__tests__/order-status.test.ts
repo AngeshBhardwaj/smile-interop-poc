@@ -16,7 +16,7 @@ import {
   canEditOrder,
   canDeleteOrder,
   isTerminalState,
-  getNextStates
+  getNextStates,
 } from '../order-status';
 
 describe('OrderStatus Enums', () => {

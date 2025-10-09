@@ -118,20 +118,20 @@ export class OrderController {
         limit: filters.limit,
         offset: filters.offset,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
       logger.error('Failed to list orders', {
         error: error.message,
         correlationId: req.correlationId,
-        userId: req.user?.userId
+        userId: req.user?.userId,
       });
 
       res.status(500).json({
         error: 'Failed to retrieve orders',
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   };
@@ -172,7 +172,7 @@ export class OrderController {
       res.status(200).json({
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -180,20 +180,20 @@ export class OrderController {
         error: error.message,
         orderId: req.params.orderId,
         correlationId: req.correlationId,
-        userId: req.user?.userId
+        userId: req.user?.userId,
       });
 
       if (error.name === 'OrderNotFoundError') {
         res.status(404).json({
           error: 'Order not found',
           correlationId: req.correlationId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       } else {
         res.status(500).json({
           error: 'Failed to retrieve order',
           correlationId: req.correlationId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }
@@ -300,28 +300,28 @@ export class OrderController {
         orderData,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(201).json({
         message: 'Order created successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
       logger.error('Failed to create order', {
         error: error.message,
         correlationId: req.correlationId,
-        userId: req.user?.userId
+        userId: req.user?.userId,
       });
 
       res.status(400).json({
         error: 'Failed to create order',
         message: error.message,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   };
@@ -381,14 +381,14 @@ export class OrderController {
         updateData,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order updated successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -396,17 +396,17 @@ export class OrderController {
         error: error.message,
         orderId: req.params.orderId,
         correlationId: req.correlationId,
-        userId: req.user?.userId
+        userId: req.user?.userId,
       });
 
       const statusCode = error.name === 'OrderNotFoundError' ? 404 :
-                        error.name === 'OrderNotEditableError' ? 422 : 400;
+        error.name === 'OrderNotEditableError' ? 422 : 400;
 
       res.status(statusCode).json({
         error: 'Failed to update order',
         message: error.message,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   };
@@ -459,7 +459,7 @@ export class OrderController {
         deletionReason,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(204).send();
@@ -469,7 +469,7 @@ export class OrderController {
         error: error.message,
         orderId: req.params.orderId,
         correlationId: req.correlationId,
-        userId: req.user?.userId
+        userId: req.user?.userId,
       });
 
       const statusCode = error.name === 'OrderNotFoundError' ? 404 : 422;
@@ -478,7 +478,7 @@ export class OrderController {
         error: 'Failed to delete order',
         message: error.message,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   };
@@ -516,14 +516,14 @@ export class OrderController {
         orderId,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order submitted for approval',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -572,7 +572,7 @@ export class OrderController {
       // Add userId from auth context to request body before validation
       const approvalData = validators.approveOrder({
         ...req.body,
-        userId: req.user!.userId
+        userId: req.user!.userId,
       });
 
       const order = await this.orderService.approveOrder(
@@ -580,14 +580,14 @@ export class OrderController {
         approvalData.notes || '',
         approvalData.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order approved successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -640,21 +640,21 @@ export class OrderController {
       // Add userId from auth context to request body before validation
       const rejectionData = validators.rejectOrder({
         ...req.body,
-        userId: req.user!.userId
+        userId: req.user!.userId,
       });
 
       const order = await this.orderService.rejectOrder(
         orderId,
         rejectionData,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order rejected and returned to draft for editing',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -691,14 +691,14 @@ export class OrderController {
         orderId,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order packed and ready for shipping',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -750,7 +750,7 @@ export class OrderController {
       // Add userId from auth context to request body before validation
       const shippingData = validators.shippingData({
         ...req.body,
-        userId: req.user!.userId
+        userId: req.user!.userId,
       });
 
       const order = await this.orderService.shipOrder(
@@ -758,14 +758,14 @@ export class OrderController {
         shippingData,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order shipped successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -817,7 +817,7 @@ export class OrderController {
       // Add userId from auth context to request body before validation
       const receivedData = validators.receivedData({
         ...req.body,
-        userId: req.user!.userId
+        userId: req.user!.userId,
       });
 
       const order = await this.orderService.receiveOrder(
@@ -825,14 +825,14 @@ export class OrderController {
         receivedData,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order received successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -882,7 +882,7 @@ export class OrderController {
       // Add userId from auth context to request body before validation
       const fulfillmentData = validators.fulfillmentData({
         ...req.body,
-        userId: req.user!.userId
+        userId: req.user!.userId,
       });
 
       const order = await this.orderService.fulfillOrder(
@@ -890,14 +890,14 @@ export class OrderController {
         fulfillmentData,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order fulfilled successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -963,21 +963,21 @@ export class OrderController {
       // Add userId from auth context to request body before validation
       const returnData = validators.returnRequest({
         ...req.body,
-        userId: req.user!.userId
+        userId: req.user!.userId,
       });
 
       const order = await this.orderService.returnOrder(
         orderId,
         returnData,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order return initiated successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -1014,14 +1014,14 @@ export class OrderController {
         orderId,
         req.user!.userId,
         req.correlationId,
-        req.sessionId
+        req.sessionId,
       );
 
       res.status(200).json({
         message: 'Order return completed successfully',
         order,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
     } catch (error: any) {
@@ -1039,7 +1039,7 @@ export class OrderController {
       version: '1.0.0',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      correlationId: (req as BusinessRequest).correlationId || 'health-check'
+      correlationId: (req as BusinessRequest).correlationId || 'health-check',
     });
   };
 
@@ -1050,13 +1050,13 @@ export class OrderController {
     error: any,
     req: BusinessRequest,
     res: Response,
-    operation: string
+    operation: string,
   ): void {
     logger.error(`Failed to ${operation}`, {
       error: error.message,
       orderId: req.params.orderId,
       correlationId: req.correlationId,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     let statusCode = 500;
@@ -1070,7 +1070,7 @@ export class OrderController {
       error: `Failed to ${operation}`,
       message: error.message,
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }

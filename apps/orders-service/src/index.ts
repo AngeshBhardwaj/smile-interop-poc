@@ -18,7 +18,7 @@ import {
   businessErrorHandler,
   validateContentType,
   rateLimitHeaders,
-  requestTimeout
+  requestTimeout,
 } from './middleware/business.middleware';
 
 /**
@@ -134,16 +134,16 @@ const swaggerOptions = {
         },
         OrderStatus: {
           type: 'string',
-          enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'PACKED', 'SHIPPED', 'RECEIVED', 'FULFILLED', 'RETURNED', 'RETURN_COMPLETE']
+          enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'PACKED', 'SHIPPED', 'RECEIVED', 'FULFILLED', 'RETURNED', 'RETURN_COMPLETE'],
         },
         OrderType: {
           type: 'string',
-          enum: ['medicine', 'equipment', 'supplies', 'vaccines']
+          enum: ['medicine', 'equipment', 'supplies', 'vaccines'],
         },
         OrderPriority: {
           type: 'string',
-          enum: ['low', 'normal', 'high', 'urgent']
-        }
+          enum: ['low', 'normal', 'high', 'urgent'],
+        },
       },
     },
     security: [
@@ -205,7 +205,7 @@ function createApp(): Express {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+        imgSrc: ["'self'", 'data:', 'https:'],
       },
     },
     hsts: {

@@ -18,7 +18,7 @@ const commonPatterns = {
   userId: Joi.string().min(3).max(50).required(),
   notes: Joi.string().max(2000).allow(''),
   tags: Joi.array().items(Joi.string().max(50)).max(10),
-  customFields: Joi.object().unknown(true)
+  customFields: Joi.object().unknown(true),
 };
 
 /**
@@ -33,7 +33,7 @@ const addressSchema = Joi.object({
   buildingName: Joi.string().max(100).optional(),
   floor: Joi.string().max(20).optional(),
   room: Joi.string().max(50).optional(),
-  deliveryInstructions: Joi.string().max(500).optional()
+  deliveryInstructions: Joi.string().max(500).optional(),
 });
 
 /**
@@ -45,7 +45,7 @@ const vendorSchema = Joi.object({
   phoneNumber: Joi.string().pattern(/^[\+]?[1-9][\d]{0,15}$/).optional(),
   email: Joi.string().email().optional(),
   address: addressSchema.optional(),
-  accountNumber: Joi.string().max(50).optional()
+  accountNumber: Joi.string().max(50).optional(),
 });
 
 /**
@@ -65,7 +65,7 @@ const orderItemSchema = Joi.object({
   unitPrice: Joi.number().positive().precision(2).optional(),
   totalPrice: Joi.number().positive().precision(2).optional(),
   specifications: Joi.object().unknown(true).optional(),
-  notes: commonPatterns.notes.optional()
+  notes: commonPatterns.notes.optional(),
 });
 
 /**
@@ -80,7 +80,7 @@ const financialsSchema = Joi.object({
   currency: Joi.string().length(3).uppercase().default('USD'),
   paymentTerms: Joi.string().max(100).optional(),
   budgetCode: Joi.string().max(50).optional(),
-  costCenter: Joi.string().max(50).optional()
+  costCenter: Joi.string().max(50).optional(),
 });
 
 /**
@@ -99,7 +99,7 @@ export const createOrderSchema = Joi.object({
   financials: financialsSchema.optional(),
   notes: commonPatterns.notes.optional(),
   tags: commonPatterns.tags.optional(),
-  customFields: commonPatterns.customFields.optional()
+  customFields: commonPatterns.customFields.optional(),
 }).custom((value, helpers) => {
   // Custom validation: required date must be in the future
   const requiredDate = new Date(value.requiredDate);
@@ -122,7 +122,7 @@ export const createOrderSchema = Joi.object({
   return value;
 }).messages({
   'custom.requiredDateFuture': 'Required date must be in the future',
-  'custom.financialCalculation': 'Total amount does not match calculated value'
+  'custom.financialCalculation': 'Total amount does not match calculated value',
 });
 
 /**
@@ -138,7 +138,7 @@ export const updateOrderSchema = Joi.object({
   financials: financialsSchema.optional(),
   notes: commonPatterns.notes.optional(),
   tags: commonPatterns.tags.optional(),
-  customFields: commonPatterns.customFields.optional()
+  customFields: commonPatterns.customFields.optional(),
 }).min(1).custom((value, helpers) => {
   // Custom validation: required date must be in the future if provided
   if (value.requiredDate) {
@@ -151,7 +151,7 @@ export const updateOrderSchema = Joi.object({
 
   return value;
 }).messages({
-  'custom.requiredDateFuture': 'Required date must be in the future'
+  'custom.requiredDateFuture': 'Required date must be in the future',
 });
 
 /**
@@ -172,7 +172,7 @@ export const orderFiltersSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(1000).default(50),
   offset: Joi.number().integer().min(0).default(0),
   sortBy: Joi.string().valid('createdAt', 'updatedAt', 'requiredDate', 'priority').default('createdAt'),
-  sortOrder: Joi.string().valid('asc', 'desc').default('desc')
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 }).custom((value, helpers) => {
   // Custom validation: date range validation
   if (value.dateFrom && value.dateTo) {
@@ -185,7 +185,7 @@ export const orderFiltersSchema = Joi.object({
 
   return value;
 }).messages({
-  'custom.invalidDateRange': 'dateFrom must be before dateTo'
+  'custom.invalidDateRange': 'dateFrom must be before dateTo',
 });
 
 /**
@@ -195,7 +195,7 @@ export const stateTransitionSchema = Joi.object({
   newStatus: Joi.string().valid(...Object.values(OrderStatus)).required(),
   reason: Joi.string().min(5).max(500).optional(),
   notes: commonPatterns.notes.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -204,7 +204,7 @@ export const stateTransitionSchema = Joi.object({
 export const rejectOrderSchema = Joi.object({
   rejectionReason: Joi.string().min(10).max(500).required(),
   notes: commonPatterns.notes.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -212,7 +212,7 @@ export const rejectOrderSchema = Joi.object({
  */
 export const approveOrderSchema = Joi.object({
   notes: commonPatterns.notes.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -222,7 +222,7 @@ export const shippingDataSchema = Joi.object({
   trackingNumber: Joi.string().min(5).max(100).optional(),
   carrier: Joi.string().min(2).max(100).optional(),
   estimatedDelivery: commonPatterns.isoDate.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -232,7 +232,7 @@ export const receivedDataSchema = Joi.object({
   receivedBy: commonPatterns.userId.required(),
   deliveredBy: Joi.string().max(100).optional(),
   notes: commonPatterns.notes.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -241,7 +241,7 @@ export const receivedDataSchema = Joi.object({
 export const fulfillmentDataSchema = Joi.object({
   satisfactionRating: Joi.number().integer().min(1).max(10).optional(),
   completionNotes: commonPatterns.notes.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -255,18 +255,18 @@ export const returnRequestSchema = Joi.object({
       itemId: commonPatterns.uuid.required(),
       quantityReturned: Joi.number().integer().min(1).max(10000).required(),
       condition: Joi.string().min(3).max(200).required(),
-      notes: Joi.string().max(500).optional()
-    })
+      notes: Joi.string().max(500).optional(),
+    }),
   ).min(1).max(100).required(),
   notes: commonPatterns.notes.optional(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
  * Order ID parameter validation schema
  */
 export const orderIdSchema = Joi.object({
-  orderId: commonPatterns.uuid.required()
+  orderId: commonPatterns.uuid.required(),
 });
 
 /**
@@ -274,7 +274,7 @@ export const orderIdSchema = Joi.object({
  */
 export const deleteOrderSchema = Joi.object({
   deletionReason: Joi.string().min(5).max(500).required(),
-  userId: commonPatterns.userId
+  userId: commonPatterns.userId,
 });
 
 /**
@@ -285,14 +285,14 @@ export function validateSchema(schema: Joi.Schema) {
     const { error, value } = schema.validate(data, {
       abortEarly: false,
       stripUnknown: true,
-      convert: true
+      convert: true,
     });
 
     if (error) {
       const validationErrors = error.details.map(detail => ({
         field: detail.path.join('.'),
         message: detail.message,
-        value: detail.context?.value
+        value: detail.context?.value,
       }));
 
       throw new Error(`Validation failed: ${JSON.stringify(validationErrors)}`);
@@ -317,5 +317,5 @@ export const validators = {
   fulfillmentData: validateSchema(fulfillmentDataSchema),
   returnRequest: validateSchema(returnRequestSchema),
   orderId: validateSchema(orderIdSchema),
-  deleteOrder: validateSchema(deleteOrderSchema)
+  deleteOrder: validateSchema(deleteOrderSchema),
 };

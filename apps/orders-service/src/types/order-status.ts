@@ -45,7 +45,7 @@ export const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.RECEIVED]: [OrderStatus.FULFILLED, OrderStatus.RETURNED],
   [OrderStatus.FULFILLED]: [], // Terminal state
   [OrderStatus.RETURNED]: [OrderStatus.RETURN_COMPLETE],
-  [OrderStatus.RETURN_COMPLETE]: [] // Terminal state
+  [OrderStatus.RETURN_COMPLETE]: [], // Terminal state
 };
 
 /**

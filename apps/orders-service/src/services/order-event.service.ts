@@ -21,7 +21,7 @@ import {
   OrderShippedEventData,
   OrderReceivedEventData,
   OrderReturnedEventData,
-  OrderFulfilledEventData
+  OrderFulfilledEventData,
 } from '../types/order-events';
 import { Order, RejectOrderRequest, InitiateReturnRequest } from '../types/order-types';
 import { OrderStatus } from '../types/order-status';
@@ -43,7 +43,7 @@ export class OrderEventService {
     this.config = config;
     this.eventEmitter = new EventEmitter({
       rabbitmqUrl: config.rabbitmqUrl,
-      exchange: config.exchange
+      exchange: config.exchange,
     });
   }
 
@@ -55,7 +55,7 @@ export class OrderEventService {
       await this.eventEmitter.connect();
       logger.info('Order Event Service initialized successfully', {
         exchange: this.config.exchange,
-        facility: this.config.facilityId
+        facility: this.config.facilityId,
       });
     } catch (error: any) {
       logger.error('Failed to initialize Order Event Service', { error });
@@ -82,7 +82,7 @@ export class OrderEventService {
     order: Order,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderCreatedEventData = {
       orderId: order.orderId,
@@ -98,9 +98,9 @@ export class OrderEventService {
       deliveryLocation: {
         facilityId: order.facilityId,
         ...(order.departmentId && { departmentId: order.departmentId }),
-        ...(order.deliveryAddress.room && { room: order.deliveryAddress.room })
+        ...(order.deliveryAddress.room && { room: order.deliveryAddress.room }),
       },
-      ...(order.tags && { tags: order.tags })
+      ...(order.tags && { tags: order.tags }),
     };
 
     await this.emitEvent(
@@ -109,7 +109,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -122,7 +122,7 @@ export class OrderEventService {
     previousValues: Record<string, any>,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderUpdatedEventData = {
       orderId: order.orderId,
@@ -135,7 +135,7 @@ export class OrderEventService {
       newValues: this.extractUpdatedValues(order, updatedFields),
       itemsAdded: 0, // Calculate based on comparison
       itemsRemoved: 0, // Calculate based on comparison
-      itemsModified: 0 // Calculate based on comparison
+      itemsModified: 0, // Calculate based on comparison
     };
 
     await this.emitEvent(
@@ -144,7 +144,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -156,7 +156,7 @@ export class OrderEventService {
     deletionReason: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderDeletedEventData = {
       orderId: order.orderId,
@@ -165,7 +165,7 @@ export class OrderEventService {
       deletedBy: userId,
       deletionReason,
       itemCount: order.items.length,
-      orderAge: this.calculateOrderAge(order.createdAt)
+      orderAge: this.calculateOrderAge(order.createdAt),
     };
 
     await this.emitEvent(
@@ -174,7 +174,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -185,7 +185,7 @@ export class OrderEventService {
     order: Order,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderStateTransitionEventData = {
       orderId: order.orderId,
@@ -197,7 +197,7 @@ export class OrderEventService {
       priority: order.priority,
       itemCount: order.items.length,
       ...(order.financials?.totalAmount !== undefined && { estimatedValue: order.financials.totalAmount }),
-      ...(order.vendor?.vendorId && { vendorId: order.vendor.vendorId })
+      ...(order.vendor?.vendorId && { vendorId: order.vendor.vendorId }),
     };
 
     await this.emitEvent(
@@ -206,7 +206,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -218,7 +218,7 @@ export class OrderEventService {
     approvalData: { approvedBy: string; approvalDate: string; notes?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderApprovedEventData = {
       orderId: order.orderId,
@@ -230,7 +230,7 @@ export class OrderEventService {
       ...(order.vendor?.vendorId && { vendorId: order.vendor.vendorId }),
       ...(order.vendor?.vendorName && { vendorName: order.vendor.vendorName }),
       ...(order.deliveryInfo?.estimatedDeliveryDate && { estimatedDeliveryDate: order.deliveryInfo.estimatedDeliveryDate }),
-      ...(approvalData.notes && { approvalNotes: approvalData.notes })
+      ...(approvalData.notes && { approvalNotes: approvalData.notes }),
     };
 
     await this.emitEvent(
@@ -239,7 +239,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -250,7 +250,7 @@ export class OrderEventService {
     order: Order,
     rejectionData: RejectOrderRequest,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderRejectedEventData = {
       orderId: order.orderId,
@@ -261,7 +261,7 @@ export class OrderEventService {
       rejectionReason: rejectionData.rejectionReason,
       ...(order.financials?.totalAmount !== undefined && { estimatedValue: order.financials.totalAmount }),
       canResubmit: true,
-      ...(rejectionData.notes && { rejectionNotes: rejectionData.notes })
+      ...(rejectionData.notes && { rejectionNotes: rejectionData.notes }),
     };
 
     await this.emitEvent(
@@ -270,7 +270,7 @@ export class OrderEventService {
       order.orderId,
       rejectionData.userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -282,7 +282,7 @@ export class OrderEventService {
     shippingData: { trackingNumber?: string; carrier?: string; estimatedDelivery?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderShippedEventData = {
       orderId: order.orderId,
@@ -299,8 +299,8 @@ export class OrderEventService {
         ...(order.departmentId && { departmentId: order.departmentId }),
         ...(order.deliveryAddress.room && { room: order.deliveryAddress.room }),
         city: order.deliveryAddress.city,
-        state: order.deliveryAddress.state
-      }
+        state: order.deliveryAddress.state,
+      },
     };
 
     await this.emitEvent(
@@ -309,7 +309,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -321,7 +321,7 @@ export class OrderEventService {
     receivedData: { receivedBy: string; deliveredBy?: string; notes?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderReceivedEventData = {
       orderId: order.orderId,
@@ -334,10 +334,10 @@ export class OrderEventService {
         name: item.name,
         quantityOrdered: item.quantityOrdered,
         quantityReceived: item.quantityReceived || item.quantityOrdered,
-        condition: 'good' // Would be determined during receiving process
+        condition: 'good', // Would be determined during receiving process
       })),
       ...(receivedData.notes && { deliveryNotes: receivedData.notes }),
-      requiresInspection: this.requiresInspection(order)
+      requiresInspection: this.requiresInspection(order),
     };
 
     await this.emitEvent(
@@ -346,7 +346,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -358,7 +358,7 @@ export class OrderEventService {
     fulfillmentData: { satisfactionRating?: number; completionNotes?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderFulfilledEventData = {
       orderId: order.orderId,
@@ -371,7 +371,7 @@ export class OrderEventService {
       ...(order.financials?.totalAmount !== undefined && { totalValue: order.financials.totalAmount }),
       itemCount: order.items.length,
       ...(fulfillmentData.satisfactionRating !== undefined && { satisfactionRating: fulfillmentData.satisfactionRating }),
-      ...(fulfillmentData.completionNotes && { completionNotes: fulfillmentData.completionNotes })
+      ...(fulfillmentData.completionNotes && { completionNotes: fulfillmentData.completionNotes }),
     };
 
     await this.emitEvent(
@@ -380,7 +380,7 @@ export class OrderEventService {
       order.orderId,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -391,7 +391,7 @@ export class OrderEventService {
     order: Order,
     returnData: InitiateReturnRequest,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     const eventData: OrderReturnedEventData = {
       orderId: order.orderId,
@@ -404,11 +404,11 @@ export class OrderEventService {
         itemId: item.itemId,
         name: order.items.find(i => i.itemId === item.itemId)?.name || 'Unknown',
         quantityReturned: item.quantityReturned,
-        condition: item.condition
+        condition: item.condition,
       })),
       vendorNotified: true, // Would be set by business logic
       refundExpected: true,
-      replacementRequired: returnData.returnType === 'damaged' || returnData.returnType === 'wrong_item'
+      replacementRequired: returnData.returnType === 'damaged' || returnData.returnType === 'wrong_item',
     };
 
     await this.emitEvent(
@@ -417,7 +417,7 @@ export class OrderEventService {
       order.orderId,
       returnData.userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -430,7 +430,7 @@ export class OrderEventService {
     resourceId: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     try {
       const eventId = correlationId || this.generateCorrelationId();
@@ -445,7 +445,7 @@ export class OrderEventService {
         service: 'orders-service',
         containsPII: false, // Orders don't contain PII/PHI
         dataClassification: 'internal',
-        eventVersion: '1.0'
+        eventVersion: '1.0',
       };
 
       const cloudEvent: OrderCloudEvent = {
@@ -458,8 +458,8 @@ export class OrderEventService {
         subject: `order/${resourceId}`,
         data: {
           eventData,
-          metadata
-        }
+          metadata,
+        },
       };
 
       await this.eventEmitter.emit(cloudEvent as any);
@@ -468,7 +468,7 @@ export class OrderEventService {
         eventType,
         orderId: resourceId,
         correlationId: eventId,
-        userId
+        userId,
       });
 
     } catch (error: any) {
@@ -476,7 +476,7 @@ export class OrderEventService {
         eventType,
         orderId: resourceId,
         error,
-        userId
+        userId,
       });
       throw error;
     }

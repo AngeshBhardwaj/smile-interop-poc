@@ -66,7 +66,7 @@ describe('HealthController', () => {
         gender: 'male',
         race: 'caucasian',
         ethnicity: 'not-hispanic',
-        preferredLanguage: 'english'
+        preferredLanguage: 'english',
       },
       contactInfo: {
         primaryPhone: '555-0123',
@@ -76,18 +76,18 @@ describe('HealthController', () => {
           city: 'Anytown',
           state: 'CA',
           zipCode: '12345',
-          country: 'USA'
-        }
+          country: 'USA',
+        },
       },
       insurance: [{
         planName: 'Health Plan',
         memberId: 'MEM123',
-        groupNumber: 'GRP456'
+        groupNumber: 'GRP456',
       }],
       facilityId: 'facility-001',
       registrationSource: 'admission',
       registeredBy: 'user-123',
-      registrationDate: '2024-01-15T10:00:00Z'
+      registrationDate: '2024-01-15T10:00:00Z',
     };
 
     it('should register a patient successfully', async () => {
@@ -103,7 +103,7 @@ describe('HealthController', () => {
         validPatientData,
         'test-user',
         'test-correlation-id',
-        undefined
+        undefined,
       );
     });
 
@@ -122,7 +122,7 @@ describe('HealthController', () => {
 
     it('should handle service errors gracefully', async () => {
       mockHealthEventService.emitPatientRegistration.mockRejectedValue(
-        new Error('Service unavailable')
+        new Error('Service unavailable'),
       );
 
       const response = await request(app)
@@ -146,7 +146,7 @@ describe('HealthController', () => {
       status: 'scheduled',
       reasonForVisit: 'Annual checkup',
       scheduledBy: 'user-123',
-      scheduleDate: '2024-01-15T10:00:00Z'
+      scheduleDate: '2024-01-15T10:00:00Z',
     };
 
     it('should schedule an appointment successfully', async () => {
@@ -182,14 +182,14 @@ describe('HealthController', () => {
         bloodPressure: {
           systolic: 120,
           diastolic: 80,
-          unit: 'mmHg'
+          unit: 'mmHg',
         },
         heartRate: { value: 72, unit: 'bpm' },
-        respiratoryRate: { value: 16, unit: 'breaths/min' }
+        respiratoryRate: { value: 16, unit: 'breaths/min' },
       },
       measurementTime: '2024-01-15T10:00:00Z',
       facilityId: 'facility-001',
-      recordedBy: 'user-123'
+      recordedBy: 'user-123',
     };
 
     it('should record vital signs successfully', async () => {
@@ -208,8 +208,8 @@ describe('HealthController', () => {
         ...validVitalsData,
         vitals: {
           ...validVitalsData.vitals,
-          temperature: { value: 150, unit: 'F' } // Invalid temperature
-        }
+          temperature: { value: 150, unit: 'F' }, // Invalid temperature
+        },
       };
 
       await request(app)
@@ -231,7 +231,7 @@ describe('HealthController', () => {
       channel: 'email',
       status: 'pending',
       createdAt: '2024-01-15T10:00:00Z',
-      createdBy: 'user-123'
+      createdBy: 'user-123',
     };
 
     it('should send notification successfully', async () => {
@@ -256,12 +256,12 @@ describe('HealthController', () => {
         testName: 'Complete Blood Count',
         testCode: 'CBC',
         result: 'Normal',
-        status: 'normal'
+        status: 'normal',
       }],
       facilityId: 'facility-001',
       orderingProvider: 'PROV-001',
       resultDate: '2024-01-15T10:00:00Z',
-      reportedBy: 'user-123'
+      reportedBy: 'user-123',
     };
 
     it('should report lab results successfully', async () => {
@@ -285,14 +285,14 @@ describe('HealthController', () => {
       medication: {
         name: 'Lisinopril',
         strength: '10mg',
-        form: 'tablet'
+        form: 'tablet',
       },
       dosage: {
         amount: '1',
         frequency: 'daily',
-        route: 'oral'
+        route: 'oral',
       },
-      facilityId: 'facility-001'
+      facilityId: 'facility-001',
     };
 
     it('should prescribe medication successfully', async () => {

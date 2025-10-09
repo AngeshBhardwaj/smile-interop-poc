@@ -164,7 +164,7 @@ describe('Security Middleware', () => {
           userAgent: undefined,
           contentLength: undefined,
           responseTime: expect.any(Number),
-        })
+        }),
       );
     });
   });
@@ -223,7 +223,7 @@ describe('Security Middleware', () => {
           reason: 'missing-credentials',
           path: '/test',
           method: 'GET',
-        }
+        },
       );
     });
 
@@ -239,7 +239,7 @@ describe('Security Middleware', () => {
         {
           method: 'api-key',
           path: '/test',
-        }
+        },
       );
     });
   });
@@ -309,7 +309,7 @@ describe('Security Middleware', () => {
           requiredRoles: ['healthcare-provider', 'physician', 'nurse', 'admin'],
           path: '/test',
           method: 'GET',
-        }
+        },
       );
     });
   });
@@ -352,7 +352,7 @@ describe('Security Middleware', () => {
           errorType: 'Error',
           path: '/test',
           method: 'GET',
-        }
+        },
       );
     });
 
@@ -364,7 +364,7 @@ describe('Security Middleware', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           correlationId: 'unknown',
-        })
+        }),
       );
     });
   });

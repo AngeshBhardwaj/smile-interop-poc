@@ -301,32 +301,32 @@ export class HealthEventService {
   ): T {
     // Apply specific masking based on event type
     switch (eventType) {
-      case HealthEventType.PATIENT_REGISTERED:
-      case HealthEventType.PATIENT_UPDATED:
-        return maskObject(
+    case HealthEventType.PATIENT_REGISTERED:
+    case HealthEventType.PATIENT_UPDATED:
+      return maskObject(
           eventData as PatientRegistrationData,
           PATIENT_REGISTRATION_FIELD_MAPPING as Record<keyof PatientRegistrationData, SensitiveFieldType>,
-        ) as T;
+      ) as T;
 
-      case HealthEventType.APPOINTMENT_SCHEDULED:
-      case HealthEventType.APPOINTMENT_UPDATED:
-        return this.maskAppointmentData(eventData as AppointmentData) as T;
+    case HealthEventType.APPOINTMENT_SCHEDULED:
+    case HealthEventType.APPOINTMENT_UPDATED:
+      return this.maskAppointmentData(eventData as AppointmentData) as T;
 
-      case HealthEventType.VITAL_SIGNS_RECORDED:
-        return this.maskVitalSignsData(eventData as VitalSignsData) as T;
+    case HealthEventType.VITAL_SIGNS_RECORDED:
+      return this.maskVitalSignsData(eventData as VitalSignsData) as T;
 
-      case HealthEventType.NOTIFICATION_SENT:
-        return this.maskNotificationData(eventData as ClinicalNotificationData) as T;
+    case HealthEventType.NOTIFICATION_SENT:
+      return this.maskNotificationData(eventData as ClinicalNotificationData) as T;
 
-      case HealthEventType.LAB_RESULT_AVAILABLE:
-        return this.maskLabResultData(eventData as LabResultData) as T;
+    case HealthEventType.LAB_RESULT_AVAILABLE:
+      return this.maskLabResultData(eventData as LabResultData) as T;
 
-      case HealthEventType.MEDICATION_PRESCRIBED:
-        return this.maskMedicationData(eventData as MedicationData) as T;
+    case HealthEventType.MEDICATION_PRESCRIBED:
+      return this.maskMedicationData(eventData as MedicationData) as T;
 
-      default:
-        // Generic masking for unknown event types
-        return this.maskGenericHealthData(eventData);
+    default:
+      // Generic masking for unknown event types
+      return this.maskGenericHealthData(eventData);
     }
   }
 

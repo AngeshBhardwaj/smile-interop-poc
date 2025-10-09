@@ -15,14 +15,14 @@ import {
   RejectOrderRequest,
   InitiateReturnRequest,
   OrderItem,
-  StatusChange
+  StatusChange,
 } from '../types/order-types';
 import {
   OrderStatus,
   isValidTransition,
   canEditOrder,
   canDeleteOrder,
-  getNextStates
+  getNextStates,
 } from '../types/order-status';
 import { OrderEventService } from './order-event.service';
 
@@ -47,7 +47,7 @@ export class InvalidStateTransitionError extends OrderError {
     super(
       `Invalid state transition from ${fromStatus} to ${toStatus}`,
       'INVALID_STATE_TRANSITION',
-      422
+      422,
     );
   }
 }
@@ -57,7 +57,7 @@ export class OrderNotEditableError extends OrderError {
     super(
       `Order ${orderId} cannot be edited in ${status} state`,
       'ORDER_NOT_EDITABLE',
-      422
+      422,
     );
   }
 }
@@ -120,7 +120,7 @@ class OrderRepository {
     }
     if (filters.tags && filters.tags.length > 0) {
       filteredOrders = filteredOrders.filter(o =>
-        o.tags?.some(tag => filters.tags!.includes(tag))
+        o.tags?.some(tag => filters.tags!.includes(tag)),
       );
     }
 
@@ -164,7 +164,7 @@ export class OrderService {
     request: CreateOrderRequest,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     try {
       const orderId = uuidv4();
@@ -173,7 +173,7 @@ export class OrderService {
       // Generate order items with IDs
       const items: OrderItem[] = request.items.map(item => ({
         ...item,
-        itemId: uuidv4()
+        itemId: uuidv4(),
       }));
 
       // Create initial status change
@@ -182,7 +182,7 @@ export class OrderService {
         toStatus: OrderStatus.DRAFT,
         changedBy: userId,
         changedAt: now,
-        reason: 'Order created'
+        reason: 'Order created',
       };
 
       const order: Order = {
@@ -204,7 +204,7 @@ export class OrderService {
         ...(request.customFields && { customFields: request.customFields }),
         createdAt: now,
         updatedAt: now,
-        lastModifiedBy: userId
+        lastModifiedBy: userId,
       };
 
       const createdOrder = await this.repository.create(order);
@@ -214,14 +214,14 @@ export class OrderService {
         createdOrder,
         userId,
         correlationId,
-        sessionId
+        sessionId,
       );
 
       logger.info('Order created successfully', {
         orderId,
         orderType: request.orderType,
         priority: request.priority,
-        userId
+        userId,
       });
 
       return createdOrder;
@@ -251,7 +251,7 @@ export class OrderService {
     request: UpdateOrderRequest,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     try {
       const existingOrder = await this.getOrder(orderId);
@@ -289,7 +289,7 @@ export class OrderService {
         previousValues.items = existingOrder.items;
         existingOrder.items = request.items.map(item => ({
           ...item,
-          itemId: uuidv4()
+          itemId: uuidv4(),
         }));
       }
 
@@ -337,13 +337,13 @@ export class OrderService {
           previousValues,
           userId,
           correlationId,
-          sessionId
+          sessionId,
         );
 
         logger.info('Order updated successfully', {
           orderId,
           updatedFields,
-          userId
+          userId,
         });
       }
 
@@ -363,7 +363,7 @@ export class OrderService {
     deletionReason: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     try {
       const order = await this.getOrder(orderId);
@@ -373,7 +373,7 @@ export class OrderService {
         throw new OrderError(
           `Order ${orderId} cannot be deleted in ${order.status} state`,
           'ORDER_NOT_DELETABLE',
-          422
+          422,
         );
       }
 
@@ -383,7 +383,7 @@ export class OrderService {
         deletionReason,
         userId,
         correlationId,
-        sessionId
+        sessionId,
       );
 
       await this.repository.delete(orderId);
@@ -391,7 +391,7 @@ export class OrderService {
       logger.info('Order deleted successfully', {
         orderId,
         deletionReason,
-        userId
+        userId,
       });
 
     } catch (error: any) {
@@ -419,7 +419,7 @@ export class OrderService {
     orderId: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     return this.transitionOrderState(
       orderId,
@@ -427,7 +427,7 @@ export class OrderService {
       'Submitted for approval',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -439,7 +439,7 @@ export class OrderService {
     notes: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     const order = await this.transitionOrderState(
       orderId,
@@ -447,7 +447,7 @@ export class OrderService {
       'Order approved',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     // Emit approval event with additional data
@@ -456,11 +456,11 @@ export class OrderService {
       {
         approvedBy: userId,
         approvalDate: new Date().toISOString(),
-        notes
+        notes,
       },
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     return order;
@@ -473,7 +473,7 @@ export class OrderService {
     orderId: string,
     rejectionData: RejectOrderRequest,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     const order = await this.getOrder(orderId);
 
@@ -497,7 +497,7 @@ export class OrderService {
       changedBy: rejectionData.userId,
       changedAt: new Date().toISOString(),
       reason: rejectionData.rejectionReason,
-      ...(rejectionData.notes && { notes: rejectionData.notes })
+      ...(rejectionData.notes && { notes: rejectionData.notes }),
     };
     order.statusHistory.push(statusChange);
 
@@ -508,7 +508,7 @@ export class OrderService {
       updatedOrder,
       rejectionData,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     // Automatically transition back to DRAFT for editing
@@ -518,7 +518,7 @@ export class OrderService {
       'Returned to draft for editing after rejection',
       rejectionData.userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     return updatedOrder;
@@ -531,7 +531,7 @@ export class OrderService {
     orderId: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     return this.transitionOrderState(
       orderId,
@@ -539,7 +539,7 @@ export class OrderService {
       'Order packed and ready for shipping',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -551,7 +551,7 @@ export class OrderService {
     shippingData: { trackingNumber?: string; carrier?: string; estimatedDelivery?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     const order = await this.transitionOrderState(
       orderId,
@@ -559,7 +559,7 @@ export class OrderService {
       'Order shipped',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     // Update delivery info
@@ -567,7 +567,7 @@ export class OrderService {
       ...order.deliveryInfo,
       ...(shippingData.trackingNumber && { trackingNumber: shippingData.trackingNumber }),
       ...(shippingData.carrier && { carrier: shippingData.carrier }),
-      ...(shippingData.estimatedDelivery && { estimatedDeliveryDate: shippingData.estimatedDelivery })
+      ...(shippingData.estimatedDelivery && { estimatedDeliveryDate: shippingData.estimatedDelivery }),
     };
     order.updatedAt = new Date().toISOString();
 
@@ -579,7 +579,7 @@ export class OrderService {
       shippingData,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     return updatedOrder;
@@ -593,7 +593,7 @@ export class OrderService {
     receivedData: { receivedBy: string; deliveredBy?: string; notes?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     const order = await this.transitionOrderState(
       orderId,
@@ -601,7 +601,7 @@ export class OrderService {
       'Order received',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     // Update delivery info
@@ -610,7 +610,7 @@ export class OrderService {
       actualDeliveryDate: new Date().toISOString(),
       ...(receivedData.deliveredBy && { deliveredBy: receivedData.deliveredBy }),
       receivedBy: receivedData.receivedBy,
-      ...(receivedData.notes && { deliveryNotes: receivedData.notes })
+      ...(receivedData.notes && { deliveryNotes: receivedData.notes }),
     };
     order.updatedAt = new Date().toISOString();
 
@@ -622,7 +622,7 @@ export class OrderService {
       receivedData,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     return updatedOrder;
@@ -636,7 +636,7 @@ export class OrderService {
     fulfillmentData: { satisfactionRating?: number; completionNotes?: string },
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     const order = await this.transitionOrderState(
       orderId,
@@ -644,7 +644,7 @@ export class OrderService {
       'Order fulfilled',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     // Emit fulfillment event
@@ -653,7 +653,7 @@ export class OrderService {
       fulfillmentData,
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     return order;
@@ -666,7 +666,7 @@ export class OrderService {
     orderId: string,
     returnData: InitiateReturnRequest,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     const order = await this.getOrder(orderId);
 
@@ -682,7 +682,7 @@ export class OrderService {
       returnInitiatedBy: returnData.userId,
       returnDate: new Date().toISOString(),
       returnType: returnData.returnType,
-      returnedItems: returnData.returnedItems
+      returnedItems: returnData.returnedItems,
     };
     order.updatedAt = new Date().toISOString();
     order.lastModifiedBy = returnData.userId;
@@ -694,7 +694,7 @@ export class OrderService {
       changedBy: returnData.userId,
       changedAt: new Date().toISOString(),
       reason: returnData.returnReason,
-      ...(returnData.notes && { notes: returnData.notes })
+      ...(returnData.notes && { notes: returnData.notes }),
     };
     order.statusHistory.push(statusChange);
 
@@ -705,7 +705,7 @@ export class OrderService {
       updatedOrder,
       returnData,
       correlationId,
-      sessionId
+      sessionId,
     );
 
     return updatedOrder;
@@ -718,7 +718,7 @@ export class OrderService {
     orderId: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     return this.transitionOrderState(
       orderId,
@@ -726,7 +726,7 @@ export class OrderService {
       'Return processing completed',
       userId,
       correlationId,
-      sessionId
+      sessionId,
     );
   }
 
@@ -746,7 +746,7 @@ export class OrderService {
     reason: string,
     userId: string,
     correlationId?: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<Order> {
     try {
       const order = await this.getOrder(orderId);
@@ -767,7 +767,7 @@ export class OrderService {
         toStatus: newStatus,
         changedBy: userId,
         changedAt: new Date().toISOString(),
-        reason
+        reason,
       };
       order.statusHistory.push(statusChange);
 
@@ -775,14 +775,14 @@ export class OrderService {
 
       // Emit appropriate event based on new status
       switch (newStatus) {
-        case OrderStatus.SUBMITTED:
-          await this.eventService.emitOrderSubmitted(
-            updatedOrder,
-            userId,
-            correlationId,
-            sessionId
-          );
-          break;
+      case OrderStatus.SUBMITTED:
+        await this.eventService.emitOrderSubmitted(
+          updatedOrder,
+          userId,
+          correlationId,
+          sessionId,
+        );
+        break;
         // Other specific events are handled by their dedicated methods
       }
 
@@ -790,7 +790,7 @@ export class OrderService {
         orderId,
         fromStatus: previousStatus,
         toStatus: newStatus,
-        userId
+        userId,
       });
 
       return updatedOrder;
@@ -800,7 +800,7 @@ export class OrderService {
         error,
         orderId,
         newStatus,
-        userId
+        userId,
       });
       throw error;
     }

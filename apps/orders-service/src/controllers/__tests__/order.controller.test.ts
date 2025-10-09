@@ -19,8 +19,8 @@ jest.mock('@smile/common', () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
-  }
+    debug: jest.fn(),
+  },
 }));
 
 describe('OrderController', () => {
@@ -47,20 +47,20 @@ describe('OrderController', () => {
         name: 'Test Item',
         category: 'Medical',
         unitOfMeasure: 'box',
-        quantityOrdered: 10
-      }
+        quantityOrdered: 10,
+      },
     ],
     deliveryAddress: {
       street: '123 St',
       city: 'City',
       state: 'CA',
       zipCode: '12345',
-      country: 'USA'
+      country: 'USA',
     },
     statusHistory: [],
     createdAt: '2025-10-09T10:00:00Z',
     updatedAt: '2025-10-09T10:00:00Z',
-    lastModifiedBy: 'user-123'
+    lastModifiedBy: 'user-123',
   };
 
   beforeEach(() => {
@@ -80,14 +80,14 @@ describe('OrderController', () => {
       fulfillOrder: jest.fn(),
       returnOrder: jest.fn(),
       completeReturn: jest.fn(),
-      getNextStates: jest.fn()
+      getNextStates: jest.fn(),
     } as any;
 
     // Mock validators to pass through data
     (validators.orderFilters as jest.Mock) = jest.fn((data) => ({
       ...data,
       limit: parseInt(data.limit as string) || 50,
-      offset: parseInt(data.offset as string) || 0
+      offset: parseInt(data.offset as string) || 0,
     }));
     (validators.orderId as jest.Mock) = jest.fn((params) => ({ orderId: params.orderId }));
     (validators.createOrder as jest.Mock) = jest.fn((data) => data);
@@ -108,19 +108,19 @@ describe('OrderController', () => {
       user: {
         userId: 'user-123',
         roles: ['order-manager', 'approver'],
-        facilityId: 'facility-001'
+        facilityId: 'facility-001',
       },
       correlationId: 'corr-123',
       sessionId: 'sess-123',
       params: {},
       query: {},
-      body: {}
+      body: {},
     };
 
     mockResponse = {
       status: statusMock,
       json: jsonMock,
-      send: sendMock
+      send: sendMock,
     };
 
     controller = new OrderController(mockOrderService);
@@ -135,7 +135,7 @@ describe('OrderController', () => {
       mockRequest.query = { facilityId: 'facility-001', limit: '10', offset: '0' };
       mockOrderService.listOrders.mockResolvedValue({
         orders: [sampleOrder],
-        total: 1
+        total: 1,
       });
 
       await controller.listOrders(mockRequest as BusinessRequest, mockResponse as Response);
@@ -146,8 +146,8 @@ describe('OrderController', () => {
         expect.objectContaining({
           orders: [sampleOrder],
           total: 1,
-          correlationId: 'corr-123'
-        })
+          correlationId: 'corr-123',
+        }),
       );
     });
 
@@ -160,8 +160,8 @@ describe('OrderController', () => {
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Failed to retrieve orders',
-          correlationId: 'corr-123'
-        })
+          correlationId: 'corr-123',
+        }),
       );
     });
   });
@@ -178,8 +178,8 @@ describe('OrderController', () => {
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           order: sampleOrder,
-          correlationId: 'corr-123'
-        })
+          correlationId: 'corr-123',
+        }),
       );
     });
 
@@ -195,8 +195,8 @@ describe('OrderController', () => {
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Order not found',
-          correlationId: 'corr-123'
-        })
+          correlationId: 'corr-123',
+        }),
       );
     });
 
@@ -219,7 +219,7 @@ describe('OrderController', () => {
         requestedBy: 'user-123',
         requiredDate: new Date(Date.now() + 86400000 * 7).toISOString(),
         items: [{ name: 'Item', category: 'Cat', unitOfMeasure: 'box', quantityOrdered: 1 }],
-        deliveryAddress: { street: '123', city: 'City', state: 'CA', zipCode: '12345', country: 'USA' }
+        deliveryAddress: { street: '123', city: 'City', state: 'CA', zipCode: '12345', country: 'USA' },
       };
       mockOrderService.createOrder.mockResolvedValue(sampleOrder as any);
 
@@ -231,8 +231,8 @@ describe('OrderController', () => {
         expect.objectContaining({
           message: 'Order created successfully',
           order: sampleOrder,
-          correlationId: 'corr-123'
-        })
+          correlationId: 'corr-123',
+        }),
       );
     });
 
@@ -247,8 +247,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: 'Failed to create order'
-        })
+          error: 'Failed to create order',
+        }),
       );
     });
   });
@@ -265,8 +265,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order updated successfully'
-        })
+          message: 'Order updated successfully',
+        }),
       );
     });
 
@@ -344,8 +344,8 @@ describe('OrderController', () => {
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Order submitted for approval',
-          order: submittedOrder
-        })
+          order: submittedOrder,
+        }),
       );
     });
 
@@ -374,8 +374,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order approved successfully'
-        })
+          message: 'Order approved successfully',
+        }),
       );
     });
 
@@ -405,8 +405,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order rejected and returned to draft for editing'
-        })
+          message: 'Order rejected and returned to draft for editing',
+        }),
       );
     });
   });
@@ -423,8 +423,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order packed and ready for shipping'
-        })
+          message: 'Order packed and ready for shipping',
+        }),
       );
     });
   });
@@ -442,8 +442,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order shipped successfully'
-        })
+          message: 'Order shipped successfully',
+        }),
       );
     });
   });
@@ -461,8 +461,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order received successfully'
-        })
+          message: 'Order received successfully',
+        }),
       );
     });
   });
@@ -480,8 +480,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order fulfilled successfully'
-        })
+          message: 'Order fulfilled successfully',
+        }),
       );
     });
   });
@@ -492,7 +492,7 @@ describe('OrderController', () => {
       mockRequest.body = {
         returnReason: 'Damaged items',
         returnType: 'damaged',
-        returnedItems: [{ itemId: 'item-001', quantityReturned: 5, condition: 'Damaged' }]
+        returnedItems: [{ itemId: 'item-001', quantityReturned: 5, condition: 'Damaged' }],
       };
       const returnedOrder = { ...sampleOrder, status: OrderStatus.RETURNED };
       mockOrderService.returnOrder.mockResolvedValue(returnedOrder as any);
@@ -503,8 +503,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order return initiated successfully'
-        })
+          message: 'Order return initiated successfully',
+        }),
       );
     });
   });
@@ -521,8 +521,8 @@ describe('OrderController', () => {
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Order return completed successfully'
-        })
+          message: 'Order return completed successfully',
+        }),
       );
     });
   });
@@ -538,8 +538,8 @@ describe('OrderController', () => {
         expect.objectContaining({
           status: 'healthy',
           service: 'orders-service',
-          version: '1.0.0'
-        })
+          version: '1.0.0',
+        }),
       );
     });
 
@@ -550,8 +550,8 @@ describe('OrderController', () => {
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          correlationId: 'health-check'
-        })
+          correlationId: 'health-check',
+        }),
       );
     });
   });

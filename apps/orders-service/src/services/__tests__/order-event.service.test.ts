@@ -17,8 +17,8 @@ jest.mock('@smile/common', () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
-  }
+    debug: jest.fn(),
+  },
 }));
 
 describe('OrderEventService', () => {
@@ -45,12 +45,12 @@ describe('OrderEventService', () => {
         unitOfMeasure: 'box',
         quantityOrdered: 10,
         unitPrice: 5.99,
-        totalPrice: 59.90
-      }
+        totalPrice: 59.90,
+      },
     ],
     vendor: {
       vendorId: 'vendor-001',
-      vendorName: 'Medical Supplies Inc'
+      vendorName: 'Medical Supplies Inc',
     },
     deliveryAddress: {
       street: '123 Hospital Drive',
@@ -58,7 +58,7 @@ describe('OrderEventService', () => {
       state: 'CA',
       zipCode: '90210',
       country: 'USA',
-      room: 'Pharmacy Storage'
+      room: 'Pharmacy Storage',
     },
     statusHistory: [
       {
@@ -66,8 +66,8 @@ describe('OrderEventService', () => {
         toStatus: OrderStatus.DRAFT,
         changedBy: 'user-123',
         changedAt: '2025-10-09T10:00:00Z',
-        reason: 'Order created'
-      }
+        reason: 'Order created',
+      },
     ],
     createdAt: '2025-10-09T10:00:00Z',
     updatedAt: '2025-10-09T10:00:00Z',
@@ -76,8 +76,8 @@ describe('OrderEventService', () => {
     financials: {
       subtotal: 59.90,
       currency: 'USD',
-      totalAmount: 59.90
-    }
+      totalAmount: 59.90,
+    },
   };
 
   beforeEach(() => {
@@ -85,7 +85,7 @@ describe('OrderEventService', () => {
     mockEventEmitter = {
       connect: jest.fn().mockResolvedValue(undefined),
       emit: jest.fn().mockResolvedValue(undefined),
-      close: jest.fn().mockResolvedValue(undefined)
+      close: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     // Mock EventEmitter constructor
@@ -97,7 +97,7 @@ describe('OrderEventService', () => {
       facilityId: 'facility-001',
       facilityName: 'Test Hospital',
       departmentId: 'dept-001',
-      departmentName: 'Emergency Department'
+      departmentName: 'Emergency Department',
     };
 
     service = new OrderEventService(config);
@@ -151,8 +151,8 @@ describe('OrderEventService', () => {
           id: 'corr-123',
           subject: 'order/order-123',
           datacontenttype: 'application/json',
-          time: expect.any(String)
-        })
+          time: expect.any(String),
+        }),
       );
     });
 
@@ -172,8 +172,8 @@ describe('OrderEventService', () => {
           estimatedValue: 59.90,
           vendorId: 'vendor-001',
           vendorName: 'Medical Supplies Inc',
-          tags: ['urgent', 'medical']
-        })
+          tags: ['urgent', 'medical'],
+        }),
       );
     });
 
@@ -193,8 +193,8 @@ describe('OrderEventService', () => {
           service: 'orders-service',
           containsPII: false,
           dataClassification: 'internal',
-          eventVersion: '1.0'
-        })
+          eventVersion: '1.0',
+        }),
       );
     });
 
@@ -220,7 +220,7 @@ describe('OrderEventService', () => {
       mockEventEmitter.emit.mockRejectedValue(new Error('Emit failed'));
 
       await expect(
-        service.emitOrderCreated(sampleOrder, 'user-123', 'corr-123')
+        service.emitOrderCreated(sampleOrder, 'user-123', 'corr-123'),
       ).rejects.toThrow('Emit failed');
     });
   });
@@ -239,14 +239,14 @@ describe('OrderEventService', () => {
         updatedFields,
         previousValues,
         'user-456',
-        'corr-123'
+        'corr-123',
       );
 
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_UPDATED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -258,7 +258,7 @@ describe('OrderEventService', () => {
         sampleOrder,
         updatedFields,
         previousValues,
-        'user-456'
+        'user-456',
       );
 
       const emittedEvent = (mockEventEmitter.emit as jest.Mock).mock.calls[0]?.[0];
@@ -268,8 +268,8 @@ describe('OrderEventService', () => {
           updatedBy: 'user-456',
           updatedFields: ['priority'],
           previousValues: { priority: OrderPriority.NORMAL },
-          newValues: expect.objectContaining({ priority: OrderPriority.HIGH })
-        })
+          newValues: expect.objectContaining({ priority: OrderPriority.HIGH }),
+        }),
       );
     });
   });
@@ -284,14 +284,14 @@ describe('OrderEventService', () => {
         sampleOrder,
         'Duplicate order created by mistake',
         'user-123',
-        'corr-123'
+        'corr-123',
       );
 
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_DELETED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -299,7 +299,7 @@ describe('OrderEventService', () => {
       await service.emitOrderDeleted(
         sampleOrder,
         'No longer needed',
-        'user-123'
+        'user-123',
       );
 
       const emittedEvent = (mockEventEmitter.emit as jest.Mock).mock.calls[0]?.[0];
@@ -311,8 +311,8 @@ describe('OrderEventService', () => {
           deletedBy: 'user-123',
           deletionReason: 'No longer needed',
           itemCount: 1,
-          orderAge: expect.any(Number)
-        })
+          orderAge: expect.any(Number),
+        }),
       );
     });
   });
@@ -330,8 +330,8 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_SUBMITTED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -349,8 +349,8 @@ describe('OrderEventService', () => {
           transitionedBy: 'user-123',
           transitionDate: expect.any(String),
           orderType: OrderType.MEDICINE,
-          priority: OrderPriority.HIGH
-        })
+          priority: OrderPriority.HIGH,
+        }),
       );
     });
   });
@@ -365,7 +365,7 @@ describe('OrderEventService', () => {
       const approvalData = {
         approvedBy: 'approver-123',
         approvalDate: '2025-10-09T11:00:00Z',
-        notes: 'Approved for procurement'
+        notes: 'Approved for procurement',
       };
 
       await service.emitOrderApproved(approvedOrder, approvalData, 'approver-123', 'corr-123');
@@ -373,8 +373,8 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_APPROVED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -383,7 +383,7 @@ describe('OrderEventService', () => {
       const approvalData = {
         approvedBy: 'approver-123',
         approvalDate: '2025-10-09T11:00:00Z',
-        notes: 'Approved'
+        notes: 'Approved',
       };
 
       await service.emitOrderApproved(approvedOrder, approvalData, 'approver-123');
@@ -397,8 +397,8 @@ describe('OrderEventService', () => {
           approvalNotes: 'Approved',
           estimatedValue: 59.90,
           vendorId: 'vendor-001',
-          vendorName: 'Medical Supplies Inc'
-        })
+          vendorName: 'Medical Supplies Inc',
+        }),
       );
     });
   });
@@ -413,7 +413,7 @@ describe('OrderEventService', () => {
       const rejectionData = {
         rejectionReason: 'Budget constraints require additional approval',
         notes: 'Resubmit with cost analysis',
-        userId: 'approver-123'
+        userId: 'approver-123',
       };
 
       await service.emitOrderRejected(rejectedOrder, rejectionData, 'corr-123');
@@ -421,8 +421,8 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_REJECTED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -430,7 +430,7 @@ describe('OrderEventService', () => {
       const rejectedOrder = { ...sampleOrder, status: OrderStatus.REJECTED };
       const rejectionData = {
         rejectionReason: 'Insufficient justification',
-        userId: 'approver-123'
+        userId: 'approver-123',
       };
 
       await service.emitOrderRejected(rejectedOrder, rejectionData);
@@ -442,8 +442,8 @@ describe('OrderEventService', () => {
           rejectedBy: 'approver-123',
           rejectionReason: 'Insufficient justification',
           canResubmit: true,
-          estimatedValue: 59.90
-        })
+          estimatedValue: 59.90,
+        }),
       );
     });
   });
@@ -458,7 +458,7 @@ describe('OrderEventService', () => {
       const shippingData = {
         trackingNumber: 'TRACK123456',
         carrier: 'FedEx',
-        estimatedDelivery: '2025-10-12T10:00:00Z'
+        estimatedDelivery: '2025-10-12T10:00:00Z',
       };
 
       await service.emitOrderShipped(shippedOrder, shippingData, 'warehouse-123', 'corr-123');
@@ -466,8 +466,8 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_SHIPPED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -475,7 +475,7 @@ describe('OrderEventService', () => {
       const shippedOrder = { ...sampleOrder, status: OrderStatus.SHIPPED };
       const shippingData = {
         trackingNumber: 'TRACK123',
-        carrier: 'UPS'
+        carrier: 'UPS',
       };
 
       await service.emitOrderShipped(shippedOrder, shippingData, 'warehouse-123');
@@ -496,9 +496,9 @@ describe('OrderEventService', () => {
             departmentId: 'dept-001',
             room: 'Pharmacy Storage',
             city: 'Medical City',
-            state: 'CA'
-          })
-        })
+            state: 'CA',
+          }),
+        }),
       );
     });
   });
@@ -513,7 +513,7 @@ describe('OrderEventService', () => {
       const receivedData = {
         receivedBy: 'staff-456',
         deliveredBy: 'FedEx Driver John',
-        notes: 'All items in good condition'
+        notes: 'All items in good condition',
       };
 
       await service.emitOrderReceived(receivedOrder, receivedData, 'receiver-123', 'corr-123');
@@ -521,15 +521,15 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_RECEIVED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
     it('should include received items details', async () => {
       const receivedOrder = { ...sampleOrder, status: OrderStatus.RECEIVED };
       const receivedData = {
-        receivedBy: 'staff-456'
+        receivedBy: 'staff-456',
       };
 
       await service.emitOrderReceived(receivedOrder, receivedData, 'receiver-123');
@@ -546,11 +546,11 @@ describe('OrderEventService', () => {
               name: 'Paracetamol 500mg',
               quantityOrdered: 10,
               quantityReceived: 10,
-              condition: 'good'
-            })
+              condition: 'good',
+            }),
           ]),
-          requiresInspection: true // Medicine requires inspection
-        })
+          requiresInspection: true, // Medicine requires inspection
+        }),
       );
     });
 
@@ -588,7 +588,7 @@ describe('OrderEventService', () => {
       const fulfilledOrder = { ...sampleOrder, status: OrderStatus.FULFILLED };
       const fulfillmentData = {
         satisfactionRating: 9,
-        completionNotes: 'Excellent quality and timely delivery'
+        completionNotes: 'Excellent quality and timely delivery',
       };
 
       await service.emitOrderFulfilled(fulfilledOrder, fulfillmentData, 'requester-123', 'corr-123');
@@ -596,8 +596,8 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_FULFILLED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -605,7 +605,7 @@ describe('OrderEventService', () => {
       const fulfilledOrder = { ...sampleOrder, status: OrderStatus.FULFILLED };
       const fulfillmentData = {
         satisfactionRating: 8,
-        completionNotes: 'Good service'
+        completionNotes: 'Good service',
       };
 
       await service.emitOrderFulfilled(fulfilledOrder, fulfillmentData, 'requester-123');
@@ -622,8 +622,8 @@ describe('OrderEventService', () => {
           totalValue: 59.90,
           itemCount: 1,
           satisfactionRating: 8,
-          completionNotes: 'Good service'
-        })
+          completionNotes: 'Good service',
+        }),
       );
     });
   });
@@ -643,10 +643,10 @@ describe('OrderEventService', () => {
             itemId: 'item-001',
             quantityReturned: 5,
             condition: 'Damaged packaging',
-            notes: 'Boxes crushed'
-          }
+            notes: 'Boxes crushed',
+          },
         ],
-        userId: 'receiver-123'
+        userId: 'receiver-123',
       };
 
       await service.emitOrderReturned(returnedOrder, returnData, 'corr-123');
@@ -654,8 +654,8 @@ describe('OrderEventService', () => {
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         expect.objectContaining({
           type: OrderEventType.ORDER_RETURNED,
-          subject: 'order/order-123'
-        })
+          subject: 'order/order-123',
+        }),
       );
     });
 
@@ -668,10 +668,10 @@ describe('OrderEventService', () => {
           {
             itemId: 'item-001',
             quantityReturned: 10,
-            condition: 'Good but wrong'
-          }
+            condition: 'Good but wrong',
+          },
         ],
-        userId: 'receiver-123'
+        userId: 'receiver-123',
       };
 
       await service.emitOrderReturned(returnedOrder, returnData);
@@ -688,13 +688,13 @@ describe('OrderEventService', () => {
               itemId: 'item-001',
               name: 'Paracetamol 500mg',
               quantityReturned: 10,
-              condition: 'Good but wrong'
-            })
+              condition: 'Good but wrong',
+            }),
           ]),
           vendorNotified: true,
           refundExpected: true,
-          replacementRequired: true // wrong_item requires replacement
-        })
+          replacementRequired: true, // wrong_item requires replacement
+        }),
       );
     });
 
@@ -703,7 +703,7 @@ describe('OrderEventService', () => {
         returnReason: 'Damaged',
         returnType: 'damaged' as const,
         returnedItems: [{ itemId: 'item-001', quantityReturned: 1, condition: 'Damaged' }],
-        userId: 'user-123'
+        userId: 'user-123',
       };
 
       await service.emitOrderReturned(sampleOrder, returnData);
@@ -717,7 +717,7 @@ describe('OrderEventService', () => {
         returnReason: 'No longer needed',
         returnType: 'not_needed' as const,
         returnedItems: [{ itemId: 'item-001', quantityReturned: 1, condition: 'New' }],
-        userId: 'user-123'
+        userId: 'user-123',
       };
 
       await service.emitOrderReturned(sampleOrder, returnData);
@@ -774,7 +774,7 @@ describe('OrderEventService', () => {
         rabbitmqUrl: 'amqp://localhost',
         exchange: 'orders.events',
         facilityId: 'facility-001',
-        facilityName: 'Test Hospital'
+        facilityName: 'Test Hospital',
       };
 
       const serviceWithoutDept = new OrderEventService(configWithoutDept);

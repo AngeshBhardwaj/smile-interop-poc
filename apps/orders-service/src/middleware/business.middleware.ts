@@ -73,7 +73,7 @@ export function businessAuditLogging(req: BusinessRequest, res: Response, next: 
     correlationId: req.correlationId,
     sessionId: req.sessionId,
     userAgent: req.headers['user-agent'],
-    ip: req.ip
+    ip: req.ip,
   });
 
   // Override response.end to log completion
@@ -88,7 +88,7 @@ export function businessAuditLogging(req: BusinessRequest, res: Response, next: 
       duration,
       correlationId: req.correlationId,
       sessionId: req.sessionId,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     return originalEnd.call(this, chunk, encoding);
@@ -114,14 +114,14 @@ export function businessAuthentication(req: BusinessRequest, res: Response, next
           userId: 'api-user-001',
           userName: 'API User',
           roles: ['order-manager', 'approver'],
-          facilityId: 'facility-001'
+          facilityId: 'facility-001',
         };
         return next();
       } else {
         res.status(401).json({
           error: 'Invalid API key',
           correlationId: req.correlationId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         return;
       }
@@ -133,7 +133,7 @@ export function businessAuthentication(req: BusinessRequest, res: Response, next
         error: 'Authentication required',
         message: 'Bearer token or API key required',
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
@@ -147,7 +147,7 @@ export function businessAuthentication(req: BusinessRequest, res: Response, next
         userName: 'John Manager',
         roles: ['order-manager', 'approver'],
         facilityId: 'facility-001',
-        departmentId: 'purchasing'
+        departmentId: 'purchasing',
       };
       return next();
     }
@@ -160,14 +160,14 @@ export function businessAuthentication(req: BusinessRequest, res: Response, next
         userName: decoded.userName,
         roles: decoded.roles || [],
         facilityId: decoded.facilityId,
-        departmentId: decoded.departmentId
+        departmentId: decoded.departmentId,
       };
       next();
     } catch (jwtError) {
       res.status(401).json({
         error: 'Invalid token',
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
@@ -177,7 +177,7 @@ export function businessAuthentication(req: BusinessRequest, res: Response, next
     res.status(500).json({
       error: 'Authentication service error',
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }
@@ -191,7 +191,7 @@ export function businessAuthorization(req: BusinessRequest, res: Response, next:
       res.status(401).json({
         error: 'User not authenticated',
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
@@ -214,7 +214,7 @@ export function businessAuthorization(req: BusinessRequest, res: Response, next:
       'POST:/api/v1/orders/:id/receive': ['receiving-staff', 'order-manager'],
       'POST:/api/v1/orders/:id/fulfill': ['order-manager'],
       'POST:/api/v1/orders/:id/return': ['order-manager', 'receiving-staff'],
-      'POST:/api/v1/orders/:id/complete-return': ['order-manager']
+      'POST:/api/v1/orders/:id/complete-return': ['order-manager'],
     };
 
     // Normalize path for permission checking
@@ -237,14 +237,14 @@ export function businessAuthorization(req: BusinessRequest, res: Response, next:
         requiredRoles,
         method,
         path,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(403).json({
         error: 'Insufficient permissions',
         message: `Required roles: ${requiredRoles.join(', ')}`,
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       return;
     }
@@ -256,7 +256,7 @@ export function businessAuthorization(req: BusinessRequest, res: Response, next:
     res.status(500).json({
       error: 'Authorization service error',
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }
@@ -279,7 +279,7 @@ export function validateContentType(allowedTypes: string[] = ['application/json'
           res.status(415).json({
             error: 'Unsupported Media Type',
             message: `Content-Type must be one of: ${allowedTypes.join(', ')}`,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
           return;
         }
@@ -308,7 +308,7 @@ export function businessErrorHandler(
   error: any,
   req: BusinessRequest,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void {
   logger.error('Business operation error', {
     error: error.message,
@@ -317,7 +317,7 @@ export function businessErrorHandler(
     sessionId: req.sessionId,
     userId: req.user?.userId,
     method: req.method,
-    path: req.path
+    path: req.path,
   });
 
   // Handle specific error types
@@ -326,7 +326,7 @@ export function businessErrorHandler(
       error: 'Validation Error',
       message: error.message,
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -336,7 +336,7 @@ export function businessErrorHandler(
       error: error.code || 'Order Error',
       message: error.message,
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -346,7 +346,7 @@ export function businessErrorHandler(
       error: 'Order Not Found',
       message: error.message,
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -356,7 +356,7 @@ export function businessErrorHandler(
       error: 'Business Rule Violation',
       message: error.message,
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -366,7 +366,7 @@ export function businessErrorHandler(
     error: 'Internal Server Error',
     message: 'An unexpected error occurred',
     correlationId: req.correlationId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -380,7 +380,7 @@ export function requestTimeout(timeoutMs: number = 30000) {
         res.status(408).json({
           error: 'Request Timeout',
           message: `Request timed out after ${timeoutMs}ms`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }, timeoutMs);

@@ -15,7 +15,7 @@ import {
   validateContentType,
   rateLimitHeaders,
   businessErrorHandler,
-  requestTimeout
+  requestTimeout,
 } from '../business.middleware';
 import { logger } from '@smile/common';
 
@@ -25,8 +25,8 @@ jest.mock('@smile/common', () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
-  }
+    debug: jest.fn(),
+  },
 }));
 
 describe('Business Middleware', () => {
@@ -46,7 +46,7 @@ describe('Business Middleware', () => {
       headers: {},
       method: 'GET',
       path: '/api/v1/orders',
-      ip: '127.0.0.1'
+      ip: '127.0.0.1',
     };
 
     mockResponse = {
@@ -55,7 +55,7 @@ describe('Business Middleware', () => {
       json: jsonMock,
       headersSent: false,
       on: jest.fn(),
-      end: jest.fn()
+      end: jest.fn(),
     };
 
     nextFunction = jest.fn();
@@ -126,7 +126,7 @@ describe('Business Middleware', () => {
         path: '/api/v1/orders',
         correlationId: 'corr-123',
         userAgent: 'test-agent',
-        ip: '127.0.0.1'
+        ip: '127.0.0.1',
       }));
       expect(nextFunction).toHaveBeenCalled();
     });
@@ -150,7 +150,7 @@ describe('Business Middleware', () => {
         method: 'GET',
         path: '/api/v1/orders',
         correlationId: 'corr-123',
-        userId: 'user-123'
+        userId: 'user-123',
       }));
     });
   });
@@ -166,7 +166,7 @@ describe('Business Middleware', () => {
         userId: 'api-user-001',
         userName: 'API User',
         roles: ['order-manager', 'approver'],
-        facilityId: 'facility-001'
+        facilityId: 'facility-001',
       });
       expect(nextFunction).toHaveBeenCalled();
     });
@@ -179,7 +179,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Invalid API key'
+        error: 'Invalid API key',
       }));
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -195,7 +195,7 @@ describe('Business Middleware', () => {
         userName: 'John Manager',
         roles: ['order-manager', 'approver'],
         facilityId: 'facility-001',
-        departmentId: 'purchasing'
+        departmentId: 'purchasing',
       });
       expect(nextFunction).toHaveBeenCalled();
     });
@@ -208,7 +208,7 @@ describe('Business Middleware', () => {
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
         error: 'Authentication required',
-        message: 'Bearer token or API key required'
+        message: 'Bearer token or API key required',
       }));
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -229,7 +229,7 @@ describe('Business Middleware', () => {
       mockRequest.user = {
         userId: 'user-123',
         roles: ['order-viewer'],
-        facilityId: 'facility-001'
+        facilityId: 'facility-001',
       };
       mockRequest.correlationId = 'corr-123';
     });
@@ -253,7 +253,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Insufficient permissions'
+        error: 'Insufficient permissions',
       }));
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -294,7 +294,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'User not authenticated'
+        error: 'User not authenticated',
       }));
     });
   });
@@ -320,7 +320,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(415);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Unsupported Media Type'
+        error: 'Unsupported Media Type',
       }));
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -394,7 +394,7 @@ describe('Business Middleware', () => {
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
         error: 'Validation Error',
-        message: 'Validation failed'
+        message: 'Validation failed',
       }));
     });
 
@@ -406,7 +406,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Order Not Found'
+        error: 'Order Not Found',
       }));
     });
 
@@ -418,7 +418,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(422);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Business Rule Violation'
+        error: 'Business Rule Violation',
       }));
     });
 
@@ -441,7 +441,7 @@ describe('Business Middleware', () => {
 
       expect(statusMock).toHaveBeenCalledWith(409);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'ORDER_CONFLICT'
+        error: 'ORDER_CONFLICT',
       }));
     });
 
@@ -453,7 +453,7 @@ describe('Business Middleware', () => {
       expect(statusMock).toHaveBeenCalledWith(500);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
         error: 'Internal Server Error',
-        message: 'An unexpected error occurred'
+        message: 'An unexpected error occurred',
       }));
     });
 
@@ -465,7 +465,7 @@ describe('Business Middleware', () => {
       expect(logger.error).toHaveBeenCalledWith('Business operation error', expect.objectContaining({
         error: 'Test error',
         correlationId: 'corr-123',
-        userId: 'user-123'
+        userId: 'user-123',
       }));
     });
   });
@@ -495,7 +495,7 @@ describe('Business Middleware', () => {
       expect(statusMock).toHaveBeenCalledWith(408);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
         error: 'Request Timeout',
-        message: 'Request timed out after 1000ms'
+        message: 'Request timed out after 1000ms',
       }));
     });
 
@@ -521,7 +521,9 @@ describe('Business Middleware', () => {
 
       // Simulate finish event
       const finishCallback = onMock.mock.calls.find(call => call[0] === 'finish')?.[1];
-      if (finishCallback) finishCallback();
+      if (finishCallback) {
+        finishCallback();
+      }
 
       jest.advanceTimersByTime(1000);
 
@@ -538,7 +540,9 @@ describe('Business Middleware', () => {
 
       // Simulate close event
       const closeCallback = onMock.mock.calls.find(call => call[0] === 'close')?.[1];
-      if (closeCallback) closeCallback();
+      if (closeCallback) {
+        closeCallback();
+      }
 
       jest.advanceTimersByTime(1000);
 

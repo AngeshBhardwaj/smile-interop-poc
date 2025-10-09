@@ -106,7 +106,7 @@ describe('Health Service Integration', () => {
           registrationDate: '2024-01-01T00:00:00Z',
           facilityId: 'test-facility',
           registeredBy: 'test-user',
-          status: 'active'
+          status: 'active',
         });
 
       // Should get past auth but may fail validation - that's ok for this test
@@ -126,7 +126,7 @@ describe('Health Service Integration', () => {
           registrationDate: '2024-01-01T00:00:00Z',
           facilityId: 'test-facility',
           registeredBy: 'test-user',
-          status: 'active'
+          status: 'active',
         });
 
       // Should get past auth but may fail validation - that's ok for this test
@@ -160,7 +160,7 @@ describe('Health Service Integration', () => {
           registrationDate: '2024-01-01T00:00:00Z',
           facilityId: 'test-facility',
           registeredBy: 'test-user',
-          status: 'active'
+          status: 'active',
         });
 
       // Should get past content type validation
@@ -207,7 +207,7 @@ describe('Health Service Integration', () => {
           facilityName: expect.any(String),
           exchange: expect.any(String),
           rabbitmqUrl: expect.any(String),
-        })
+        }),
       );
     });
   });
