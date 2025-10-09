@@ -266,16 +266,23 @@ export function businessAuthorization(req: BusinessRequest, res: Response, next:
  */
 export function validateContentType(allowedTypes: string[] = ['application/json']) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Only validate content-type if the request has a body with content
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-      const contentType = req.headers['content-type'];
+      const contentLength = req.headers['content-length'];
+      const hasBody = contentLength && parseInt(contentLength) > 0;
 
-      if (!contentType || !allowedTypes.some(type => contentType.includes(type))) {
-        res.status(415).json({
-          error: 'Unsupported Media Type',
-          message: `Content-Type must be one of: ${allowedTypes.join(', ')}`,
-          timestamp: new Date().toISOString()
-        });
-        return;
+      // Only check Content-Type if there's actually a body
+      if (hasBody) {
+        const contentType = req.headers['content-type'];
+
+        if (!contentType || !allowedTypes.some(type => contentType.includes(type))) {
+          res.status(415).json({
+            error: 'Unsupported Media Type',
+            message: `Content-Type must be one of: ${allowedTypes.join(', ')}`,
+            timestamp: new Date().toISOString()
+          });
+          return;
+        }
       }
     }
     next();

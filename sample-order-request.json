@@ -1,0 +1,34 @@
+{
+  "facilityId": "facility-001",
+  "departmentId": "purchasing",
+  "orderType": "supplies",
+  "priority": "normal",
+  "requestedBy": "user-001",
+  "requiredDate": "2025-12-15T10:00:00Z",
+  "items": [
+    {
+      "name": "Surgical Gloves",
+      "description": "Nitrile examination gloves, powder-free",
+      "category": "medical-supplies",
+      "unitOfMeasure": "box",
+      "quantityOrdered": 50,
+      "unitPrice": 12.99
+    },
+    {
+      "name": "Face Masks",
+      "description": "Surgical face masks, disposable",
+      "category": "medical-supplies",
+      "unitOfMeasure": "box",
+      "quantityOrdered": 100,
+      "unitPrice": 8.49
+    }
+  ],
+  "deliveryAddress": {
+    "street": "123 Hospital Drive",
+    "city": "Medical City",
+    "state": "CA",
+    "zipCode": "90210",
+    "country": "USA"
+  },
+  "notes": "Urgent delivery required for OR supplies"
+}

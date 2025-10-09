@@ -236,7 +236,7 @@ export class OrderController {
    *               requiredDate:
    *                 type: string
    *                 format: date-time
-   *                 example: "2024-02-15T10:00:00Z"
+   *                 example: "2025-12-15T10:00:00Z"
    *               items:
    *                 type: array
    *                 minItems: 1
@@ -569,12 +569,16 @@ export class OrderController {
   public approveOrder = async (req: BusinessRequest, res: Response): Promise<void> => {
     try {
       const { orderId } = validators.orderId(req.params);
-      const { notes } = validators.approveOrder(req.body);
+      // Add userId from auth context to request body before validation
+      const approvalData = validators.approveOrder({
+        ...req.body,
+        userId: req.user!.userId
+      });
 
       const order = await this.orderService.approveOrder(
         orderId,
-        notes || '',
-        req.user!.userId,
+        approvalData.notes || '',
+        approvalData.userId,
         req.correlationId,
         req.sessionId
       );
@@ -633,8 +637,11 @@ export class OrderController {
   public rejectOrder = async (req: BusinessRequest, res: Response): Promise<void> => {
     try {
       const { orderId } = validators.orderId(req.params);
-      const rejectionData = validators.rejectOrder(req.body);
-      rejectionData.userId = req.user!.userId;
+      // Add userId from auth context to request body before validation
+      const rejectionData = validators.rejectOrder({
+        ...req.body,
+        userId: req.user!.userId
+      });
 
       const order = await this.orderService.rejectOrder(
         orderId,
@@ -740,7 +747,11 @@ export class OrderController {
   public shipOrder = async (req: BusinessRequest, res: Response): Promise<void> => {
     try {
       const { orderId } = validators.orderId(req.params);
-      const shippingData = validators.shippingData(req.body);
+      // Add userId from auth context to request body before validation
+      const shippingData = validators.shippingData({
+        ...req.body,
+        userId: req.user!.userId
+      });
 
       const order = await this.orderService.shipOrder(
         orderId,
@@ -803,7 +814,11 @@ export class OrderController {
   public receiveOrder = async (req: BusinessRequest, res: Response): Promise<void> => {
     try {
       const { orderId } = validators.orderId(req.params);
-      const receivedData = validators.receivedData(req.body);
+      // Add userId from auth context to request body before validation
+      const receivedData = validators.receivedData({
+        ...req.body,
+        userId: req.user!.userId
+      });
 
       const order = await this.orderService.receiveOrder(
         orderId,
@@ -864,7 +879,11 @@ export class OrderController {
   public fulfillOrder = async (req: BusinessRequest, res: Response): Promise<void> => {
     try {
       const { orderId } = validators.orderId(req.params);
-      const fulfillmentData = validators.fulfillmentData(req.body);
+      // Add userId from auth context to request body before validation
+      const fulfillmentData = validators.fulfillmentData({
+        ...req.body,
+        userId: req.user!.userId
+      });
 
       const order = await this.orderService.fulfillOrder(
         orderId,
@@ -941,8 +960,11 @@ export class OrderController {
   public returnOrder = async (req: BusinessRequest, res: Response): Promise<void> => {
     try {
       const { orderId } = validators.orderId(req.params);
-      const returnData = validators.returnRequest(req.body);
-      returnData.userId = req.user!.userId;
+      // Add userId from auth context to request body before validation
+      const returnData = validators.returnRequest({
+        ...req.body,
+        userId: req.user!.userId
+      });
 
       const order = await this.orderService.returnOrder(
         orderId,
