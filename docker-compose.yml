@@ -91,11 +91,11 @@ services:
     # volumes:
       # - ./docker/openhim/config:/app/config
     healthcheck:
-      test: ["CMD", "curl", "-k", "-f", "https://localhost:8080/heartbeat"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://127.0.0.1:8080/heartbeat"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s
 
   # OpenHIM Console
   openhim-console:
@@ -182,6 +182,94 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # Health Service - HIPAA-compliant patient registration
+  health-service:
+    build:
+      context: .
+      dockerfile: apps/health-service/Dockerfile
+    container_name: smile-health-service
+    ports:
+      - "3004:3004"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      HEALTH_SERVICE_PORT: 3004
+
+      # RabbitMQ Configuration
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      HEALTH_EVENTS_EXCHANGE: health.events
+      HEALTH_ROUTING_PREFIX: health
+
+      # Security Configuration
+      ENCRYPTION_KEY: dev-encryption-key-32-characters-long-minimum
+      API_KEY_SECRET: dev-api-key-secret-for-health
+      JWT_SECRET: dev-jwt-secret-for-health-service
+
+      # Facility Configuration
+      FACILITY_ID: facility-001
+      FACILITY_NAME: SMILE Medical Center
+      DEPARTMENT_ID: registration
+      DEPARTMENT_NAME: Patient Registration
+
+      # HIPAA Audit Configuration
+      AUDIT_LOG_ENABLED: "true"
+      PII_MASKING_ENABLED: "true"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Orders Service - Order lifecycle management
+  orders-service:
+    build:
+      context: .
+      dockerfile: apps/orders-service/Dockerfile
+    container_name: smile-orders-service
+    ports:
+      - "3005:3005"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      ORDERS_SERVICE_PORT: 3005
+
+      # RabbitMQ Configuration
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      ORDERS_EVENTS_EXCHANGE: orders.events
+      ORDERS_ROUTING_PREFIX: orders
+
+      # Security Configuration
+      API_KEY_SECRET: dev-api-key-secret-for-orders
+      JWT_SECRET: dev-jwt-secret-for-orders-service
+
+      # Facility Configuration
+      FACILITY_ID: facility-001
+      FACILITY_NAME: SMILE Medical Center
+      DEPARTMENT_ID: purchasing
+      DEPARTMENT_NAME: Purchasing Department
+
+      # Business Audit Configuration
+      AUDIT_LOG_ENABLED: "true"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
 volumes:
   rabbitmq_data:

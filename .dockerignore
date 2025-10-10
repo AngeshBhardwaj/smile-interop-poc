@@ -1,0 +1,81 @@
+# Dependencies
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build output
+dist
+**/dist
+build
+**/build
+.turbo
+**/.turbo
+
+# Test and coverage
+coverage
+**/coverage
+.nyc_output
+**/.nyc_output
+
+# Environment files (will be provided via docker-compose)
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# Documentation
+*.md
+docs
+**/*.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+jest.config.js
+**/jest.config.js
+
+# Linting
+.eslintrc*
+.prettierrc*
+**/.eslintrc*
+**/.prettierrc*
+
+# TypeScript
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# Misc
+.github
+docker
+FIX_LATER.md
+CLAUDE.md

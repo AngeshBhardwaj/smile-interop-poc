@@ -59,7 +59,7 @@ This POC implements a clean, event-driven architecture with the following compon
 
 - **RabbitMQ Management**: http://localhost:15672 (admin/admin123)
 - **OpenHIM Console**: http://localhost:9000
-- **OpenHIM Core API**: https://localhost:8080 (HTTPS)
+- **OpenHIM Core API**: https://127.0.0.1:8080 (HTTPS only, use 127.0.0.1)
 - **Jaeger Tracing**: http://localhost:16686
 - **Grafana**: http://localhost:3001 (admin/admin123)
 - **Prometheus**: http://localhost:9090
@@ -214,18 +214,60 @@ make env-example  # Creates .env.example
 cp .env.example .env
 ```
 
-## 🐳 Docker Services
+## 🐳 Docker Deployment
 
-The POC includes the following containerized services:
+### Single Command Deployment
 
-- **RabbitMQ**: Message broker with management UI
-- **MongoDB**: Database for OpenHIM
-- **OpenHIM Core**: Health information mediator
-- **OpenHIM Console**: Web administration interface
-- **Jaeger**: Distributed tracing
-- **Prometheus**: Metrics collection
-- **Grafana**: Metrics visualization
-- **Redis**: Caching layer
+Bring up the entire SMILE application stack with a single command:
+
+```bash
+make docker-up    # Starts all infrastructure and application services
+```
+
+This command will:
+- Build Docker images for health-service and orders-service
+- Start all infrastructure services (RabbitMQ, MongoDB, Redis, etc.)
+- Start application services with proper health checks
+- Configure networking between all containers
+
+### Teardown
+
+```bash
+make docker-down  # Stops and removes all containers
+```
+
+### Container Services
+
+The complete Docker stack includes:
+
+**Application Services:**
+- **health-service**: HIPAA-compliant patient registration (Port 3004)
+- **orders-service**: Order lifecycle management (Port 3005)
+
+**Infrastructure Services:**
+- **RabbitMQ**: Message broker with management UI (Ports 5672, 15672)
+- **MongoDB**: Database for OpenHIM (Port 27017)
+- **OpenHIM Core**: Health information mediator (Ports 5000, 5001, 8080)
+- **OpenHIM Console**: Web administration interface (Port 9000)
+- **Jaeger**: Distributed tracing (Port 16686)
+- **Prometheus**: Metrics collection (Port 9090)
+- **Grafana**: Metrics visualization (Port 3001)
+- **Redis**: Caching layer (Port 6379)
+
+### Health Checks
+
+All services include health checks to ensure proper startup sequence:
+- Application services wait for RabbitMQ to be healthy
+- OpenHIM Console waits for OpenHIM Core to be healthy
+- MongoDB, RabbitMQ, and Redis have built-in health checks
+
+### Swagger in Docker
+
+Both health-service and orders-service Swagger UIs are fully functional in Docker mode:
+- **Health Service**: http://localhost:3004/api/docs
+- **Orders Service**: http://localhost:3005/api/docs
+
+All API endpoints are available for testing directly from the Swagger interface.
 
 ## 🏥 Health Monitoring
 
