@@ -265,3 +265,86 @@ export interface MessageContext {
   /** Timestamp when message was received */
   receivedAt: Date;
 }
+
+/**
+ * Consumer statistics
+ */
+export interface ConsumerStats {
+  /** Total messages consumed */
+  messagesConsumed: number;
+
+  /** Messages successfully processed */
+  messagesProcessed: number;
+
+  /** Messages failed */
+  messagesFailed: number;
+
+  /** Messages sent to DLQ */
+  messagesDLQ: number;
+
+  /** Consumer start time */
+  startedAt: Date;
+
+  /** Consumer uptime in milliseconds */
+  uptime: number;
+
+  /** Messages per second (average) */
+  messagesPerSecond: number;
+
+  /** Current queue name */
+  queueName: string;
+
+  /** Whether consumer is active */
+  isActive: boolean;
+}
+
+/**
+ * CloudEvent validation result
+ */
+export interface ValidationResult {
+  /** Whether validation passed */
+  valid: boolean;
+
+  /** Validation errors if any */
+  errors?: string[];
+
+  /** CloudEvent if valid */
+  event?: any;
+}
+
+/**
+ * Event handler for CloudEvents
+ */
+export type CloudEventHandler<T = any> = (
+  event: T,
+  context: MessageContext,
+) => Promise<void>;
+
+/**
+ * Consumer options
+ */
+export interface ConsumerOptions {
+  /** Auto-acknowledge messages (not recommended) */
+  autoAck?: boolean;
+
+  /** Acknowledge on success only */
+  ackOnSuccess?: boolean;
+
+  /** Requeue failed messages */
+  requeueOnFailure?: boolean;
+
+  /** Enable message deduplication */
+  enableDeduplication?: boolean;
+
+  /** Deduplication window in milliseconds */
+  deduplicationWindow?: number;
+
+  /** Consumer tag */
+  consumerTag?: string;
+
+  /** Enable parallel processing */
+  parallel?: boolean;
+
+  /** Max parallel messages */
+  maxParallel?: number;
+}
