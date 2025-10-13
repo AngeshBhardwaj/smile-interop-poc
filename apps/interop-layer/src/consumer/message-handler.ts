@@ -62,6 +62,7 @@ export class MessageHandler {
   public parseMessage(message: amqp.ConsumeMessage): ParseResult {
     try {
       const content = message.content.toString();
+      logger.info('Received message content', { content });
 
       if (!content || content.trim() === '') {
         return {
@@ -70,7 +71,8 @@ export class MessageHandler {
         };
       }
 
-      const data = JSON.parse(content);
+  const data = JSON.parse(content);
+  logger.info('Received message data', { eventData: data });
 
       logger.debug('Message parsed successfully', {
         messageId: message.properties.messageId,

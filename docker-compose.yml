@@ -264,12 +264,49 @@ services:
     networks:
       - smile-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/health"]
+      start_period: 40s
+    restart: unless-stopped
+
+  # Interop Layer - Core routing and mediation logic
+  interop-layer:
+    build:
+      context: .
+      dockerfile: apps/interop-layer/Dockerfile
+    container_name: smile-interop-layer
+    ports:
+      - "3002:3002"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      INTEROP_LAYER_PORT: 3002
+
+      # RabbitMQ Configuration
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      RABBITMQ_EXCHANGE: orders.events
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      # Explicit bridge endpoints (use service DNS so inter-container HTTP works)
+      OPENHIM_HEALTH_ENDPOINT: "http://openhim-core:5001/health"
+      OPENHIM_ORDERS_ENDPOINT: "http://openhim-core:5001/orders"
+      OPENHIM_DEFAULT_ENDPOINT: "http://openhim-core:5001/events"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      openhim-core:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     restart: unless-stopped
+
 
 volumes:
   rabbitmq_data:

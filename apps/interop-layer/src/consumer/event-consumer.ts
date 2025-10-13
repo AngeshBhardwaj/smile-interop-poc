@@ -62,6 +62,7 @@ export class EventConsumer {
     }
 
     try {
+      logger.info('Starting consumer with config', { config: this.config });
       // Get channel from connection manager
       this.channel = await this.connectionManager.getChannel();
 
@@ -206,6 +207,8 @@ export class EventConsumer {
     if (!message || !this.channel) {
       return;
     }
+
+    logger.info('Received message', { content: message.content.toString() });
 
     const startTime = Date.now();
 

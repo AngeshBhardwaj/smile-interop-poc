@@ -348,3 +348,197 @@ export interface ConsumerOptions {
   /** Max parallel messages */
   maxParallel?: number;
 }
+
+/**
+ * Routing configuration metadata
+ */
+export interface RoutingMetadata {
+  /** Configuration version */
+  version: string;
+
+  /** Last update timestamp */
+  lastUpdated: string;
+
+  /** Configuration description */
+  description: string;
+}
+
+/**
+ * Routing system settings
+ */
+export interface RoutingSettings {
+  /** Fallback behavior when no route matches */
+  fallbackBehavior: 'route-to-fallback-queue' | 'drop' | 'error';
+
+  /** Validate routing rules on load */
+  validateOnLoad: boolean;
+
+  /** Enable dynamic route reloading */
+  dynamicReload: boolean;
+
+  /** Reload interval in milliseconds */
+  reloadInterval: number;
+
+  /** Enable route metrics tracking */
+  enableMetrics: boolean;
+}
+
+/**
+ * Route condition for content-based routing
+ */
+export interface RouteCondition {
+  /** JSONPath expression for field to evaluate */
+  field: string;
+
+  /** Comparison operator */
+  operator: 'equals' | 'notEquals' | 'contains' | 'greaterThan' | 'lessThan' | 'regex';
+
+  /** Value to compare against */
+  value: any;
+}
+
+/**
+ * Route destination configuration
+ */
+export interface RouteDestination {
+  /** Destination type */
+  type: 'http' | 'queue' | 'topic' | 'openhim' | 'webhook';
+
+  /** HTTP method (for HTTP destinations) */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+  /** Destination endpoint URL */
+  endpoint?: string;
+
+  /** Request timeout in milliseconds */
+  timeout?: number;
+
+  /** HTTP headers */
+  headers?: Record<string, string>;
+
+  /** Exchange name (for queue/topic destinations) */
+  exchange?: string;
+
+  /** Queue name */
+  queue?: string;
+
+  /** Routing key */
+  routingKey?: string;
+}
+
+/**
+ * Transformation configuration
+ */
+export interface TransformConfig {
+  /** Whether transformation is enabled */
+  enabled: boolean;
+
+  /** Transformation type */
+  type?: string;
+
+  /** Additional transformation configuration */
+  config?: Record<string, any>;
+}
+
+/**
+ * Retry configuration for routes
+ */
+export interface RouteRetryConfig {
+  /** Whether retry is enabled */
+  enabled: boolean;
+
+  /** Maximum retry attempts */
+  maxAttempts?: number;
+
+  /** Backoff delay in milliseconds */
+  backoffMs?: number;
+}
+
+/**
+ * Route definition
+ */
+export interface RouteDefinition {
+  /** Route name (unique identifier) */
+  name: string;
+
+  /** Route description */
+  description?: string;
+
+  /** Whether route is enabled */
+  enabled: boolean;
+
+  /** Source pattern (supports wildcards) */
+  source: string;
+
+  /** Event type pattern (supports wildcards) */
+  type: string;
+
+  /** Routing strategy */
+  strategy: 'type' | 'source' | 'content' | 'hybrid' | 'default' | 'fallback';
+
+  /** Route priority (0-10, higher = higher priority) */
+  priority: number;
+
+  /** Content-based routing condition */
+  condition?: RouteCondition;
+
+  /** Destination configuration */
+  destination: RouteDestination;
+
+  /** Transformation configuration */
+  transform?: TransformConfig;
+
+  /** Retry configuration */
+  retry?: RouteRetryConfig;
+}
+
+/**
+ * Complete routing configuration
+ */
+export interface RoutingConfig {
+  /** Configuration metadata */
+  metadata: RoutingMetadata;
+
+  /** Routing settings */
+  settings: RoutingSettings;
+
+  /** Route definitions */
+  routes: RouteDefinition[];
+}
+
+/**
+ * Route match result
+ */
+export interface RouteMatchResult {
+  /** Whether a route was matched */
+  matched: boolean;
+
+  /** Matched route (if any) */
+  route?: RouteDefinition;
+
+  /** Reason for no match (if not matched) */
+  reason?: string;
+}
+
+/**
+ * Routing result
+ */
+export interface RoutingResult {
+  /** Whether routing was successful */
+  success: boolean;
+
+  /** Route that was used */
+  route: RouteDefinition;
+
+  /** Destination that was routed to */
+  destination: RouteDestination;
+
+  /** Error if routing failed */
+  error?: Error;
+
+  /** Response from destination (if applicable) */
+  response?: any;
+
+  /** Routing latency in milliseconds */
+  latencyMs: number;
+}

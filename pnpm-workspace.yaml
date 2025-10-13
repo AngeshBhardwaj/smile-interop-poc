@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'test-utils'
 
 catalog:
   # Node.js types

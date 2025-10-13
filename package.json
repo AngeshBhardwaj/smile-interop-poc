@@ -35,7 +35,9 @@
     "@typescript-eslint/parser": "^7.1.1",
     "eslint": "^8.57.0",
     "turbo": "^1.12.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "amqplib": "^0.10.3",
+    "cloudevents": "^7.0.2"
   },
   "keywords": [
     "health",

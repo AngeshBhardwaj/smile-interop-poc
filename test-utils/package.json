@@ -1,0 +1,13 @@
+{
+  "name": "test-utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "publish-test-event.js",
+  "scripts": {
+    "start": "node publish-test-event.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
