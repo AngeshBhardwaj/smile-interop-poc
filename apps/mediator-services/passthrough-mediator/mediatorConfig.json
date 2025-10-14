@@ -1,0 +1,50 @@
+{
+  "urn": "urn:mediator:smile-passthrough",
+  "version": "1.0.0",
+  "name": "SMILE Pass-through Mediator",
+  "description": "Forwards CloudEvents without transformation to external webhooks",
+  "defaultChannelConfig": [
+    {
+      "name": "Health Passthrough Channel",
+      "urlPattern": "^/passthrough$",
+      "routes": [
+        {
+          "name": "Passthrough Route",
+          "host": "passthrough-mediator",
+          "port": 3100,
+          "path": "/forward",
+          "primary": true,
+          "type": "http"
+        }
+      ],
+      "allow": ["smile-poc"],
+      "type": "http",
+      "methods": ["POST"],
+      "authType": "private"
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "Passthrough Endpoint",
+      "host": "passthrough-mediator",
+      "port": 3100,
+      "path": "/forward",
+      "type": "http"
+    },
+    {
+      "name": "Health Check Endpoint",
+      "host": "passthrough-mediator",
+      "port": 3100,
+      "path": "/health",
+      "type": "http"
+    }
+  ],
+  "configDefs": [
+    {
+      "param": "webhookUrl",
+      "displayName": "Webhook URL",
+      "description": "The destination webhook URL to forward events to",
+      "type": "string"
+    }
+  ]
+}

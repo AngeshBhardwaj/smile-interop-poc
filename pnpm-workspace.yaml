@@ -1,5 +1,6 @@
 packages:
   - 'apps/*'
+  - 'apps/mediator-services/*'
   - 'packages/*'
   - 'test-utils'
 

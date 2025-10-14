@@ -2,19 +2,21 @@
 
 **Phase:** Step 3 - Implement CloudEvent Consumer in Interop Layer
 **Start Date:** 2025-10-10
-**Status:** IN PROGRESS
-**Current Task:** Task 2 - Define CloudEvent Consumer Architecture
+**Status:** IN PROGRESS - SIMPLIFIED ARCHITECTURE
+**Current Task:** Task 5 - Simplified Event-to-OpenHIM Bridge (Tasks 1-4 completed)
 
 ---
 
-## 🎯 Objective
+## 🎯 Objective (SIMPLIFIED)
 
-Implement a robust CloudEvent consumer in the Interop Layer that:
+Implement a **simple protocol bridge** in the Interop Layer that:
 1. Consumes CloudEvents from RabbitMQ queues (health-service and orders-service)
-2. Applies intelligent routing logic based on event type, source, and business rules
-3. Routes events to appropriate mediator services or client services
-4. Handles failures with Dead Letter Queue (DLQ) and retry mechanisms
-5. Provides comprehensive observability through logging, tracing, and metrics
+2. Converts CloudEvents to HTTP requests
+3. Routes ALL events to OpenHIM (which handles mediator routing)
+4. Converts HTTP responses back to CloudEvents
+5. Provides observability through logging, tracing, and metrics
+
+**KEY PRINCIPLE:** Interop Layer is a **protocol bridge only** (CloudEvents ↔ HTTP). OpenHIM handles all routing, transformation, and mediator selection.
 
 ---
 
@@ -46,39 +48,51 @@ Implement a robust CloudEvent consumer in the Interop Layer that:
     - [x] Document component interfaces
 
 ### 🔧 Phase 2: Core Implementation
-- [ ] **Task 3:** Implement RabbitMQ connection management with retry logic
-  - **Status:** PENDING
+- [x] **Task 3:** Implement RabbitMQ connection management with retry logic
+  - **Status:** COMPLETED
+  - **Date Completed:** 2025-10-10
   - **Deliverables:**
-    - Connection manager with retry/backoff
-    - Channel pooling
-    - Graceful shutdown handling
-    - Connection health monitoring
-  - **Files to create:**
-    - `apps/interop-layer/src/messaging/connection-manager.ts`
-    - `apps/interop-layer/src/messaging/types.ts`
+    - ✅ Connection manager with retry/backoff (exponential backoff with jitter)
+    - ✅ Channel pooling (Map-based with unique IDs)
+    - ✅ Graceful shutdown handling
+    - ✅ Connection health monitoring
+    - ✅ 33 unit tests, all passing
+  - **Files created:**
+    - `apps/interop-layer/src/messaging/connection-manager.ts` (558 lines)
+    - `apps/interop-layer/src/messaging/types.ts` (enhanced with consumer types)
+    - `apps/interop-layer/src/messaging/__tests__/connection-manager.test.ts` (592 lines)
 
-- [ ] **Task 4:** Implement CloudEvent consumer with proper deserialization
-  - **Status:** PENDING
+- [x] **Task 4:** Implement CloudEvent consumer with proper deserialization
+  - **Status:** COMPLETED
+  - **Date Completed:** 2025-10-10
   - **Deliverables:**
-    - Enhanced EventConsumer class
-    - CloudEvent deserialization and validation
-    - Message acknowledgment strategies
-    - Correlation ID propagation
-  - **Files to create:**
-    - `apps/interop-layer/src/consumer/event-consumer.ts`
-    - `apps/interop-layer/src/consumer/message-handler.ts`
+    - ✅ Enhanced EventConsumer class with full lifecycle management
+    - ✅ CloudEvent deserialization and validation (CloudEvents v1.0)
+    - ✅ Message acknowledgment strategies (ack/nack/requeue)
+    - ✅ Correlation ID propagation (multi-level fallback)
+    - ✅ Message deduplication with time-window cache
+    - ✅ Statistics tracking (processed, failed, duplicates)
+    - ✅ 65 unit tests total, all passing (16 validator + 24 handler + 25 consumer)
+  - **Files created:**
+    - `apps/interop-layer/src/consumer/event-consumer.ts` (324 lines)
+    - `apps/interop-layer/src/consumer/message-handler.ts` (325 lines)
+    - `apps/interop-layer/src/consumer/cloud-event-validator.ts` (155 lines)
+    - `apps/interop-layer/src/consumer/__tests__/event-consumer.test.ts` (426 lines)
+    - `apps/interop-layer/src/consumer/__tests__/message-handler.test.ts` (326 lines)
+    - `apps/interop-layer/src/consumer/__tests__/cloud-event-validator.test.ts` (233 lines)
 
-- [ ] **Task 5:** Implement routing logic based on event type and source
-  - **Status:** PENDING
+- [ ] **Task 5:** Implement simple OpenHIM HTTP bridge (SIMPLIFIED)
+  - **Status:** IN PROGRESS
+  - **Architecture Decision:** Simplified from complex routing to simple protocol bridge
+  - **Rationale:** OpenHIM handles all routing/transformation; interop-layer only converts CloudEvents ↔ HTTP
   - **Deliverables:**
-    - Event router with multiple strategies
-    - Routing configuration loader
-    - Route validation
-    - Fallback handling
+    - Simple HTTP client for OpenHIM communication
+    - CloudEvent → HTTP Request converter
+    - HTTP Response → CloudEvent converter
+    - Source-based OpenHIM URL mapping (env vars only)
   - **Files to create:**
-    - `apps/interop-layer/src/routing/event-router.ts`
-    - `apps/interop-layer/src/routing/routing-config.ts`
-    - `apps/interop-layer/src/routing/strategies/*`
+    - `apps/interop-layer/src/bridge/openhim-bridge.ts`
+    - `apps/interop-layer/src/bridge/__tests__/openhim-bridge.test.ts`
 
 - [ ] **Task 6:** Add structured logging with correlation IDs and tracing
   - **Status:** PENDING
@@ -276,19 +290,18 @@ Implement a robust CloudEvent consumer in the Interop Layer that:
 
 ---
 
-## 🏗️ Architecture Design
+## 🏗️ Architecture Design (SIMPLIFIED)
 
 ### Component Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Interop Layer Application                     │
+│             Interop Layer - Simple Protocol Bridge              │
 │                                                                   │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │                    Express HTTP Server                      │ │
 │  │  - Health Check Endpoints                                   │ │
-│  │  - Metrics Endpoints                                        │ │
-│  │  - Admin/Management APIs                                    │ │
+│  │  - Metrics Endpoints (optional)                             │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                                                                   │
 │  ┌────────────────────────────────────────────────────────────┐ │
@@ -296,61 +309,53 @@ Implement a robust CloudEvent consumer in the Interop Layer that:
 │  │  - Connection pooling with retry                           │ │
 │  │  - Channel management                                       │ │
 │  │  - Graceful shutdown                                        │ │
-│  │  - Health monitoring                                        │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                          │                                        │
 │                          ▼                                        │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │                  Event Consumer                             │ │
-│  │  - Subscribe to multiple queues                            │ │
+│  │  - Subscribe to health & orders queues                     │ │
 │  │  - CloudEvent deserialization & validation                 │ │
-│  │  - Message acknowledgment strategies                       │ │
-│  │  - Correlation ID extraction & propagation                 │ │
+│  │  - Message acknowledgment (ack/nack)                       │ │
+│  │  - Correlation ID extraction                               │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                          │                                        │
 │                          ▼                                        │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │                   Message Handler                           │ │
-│  │  - Pre-processing (validation, enrichment)                 │ │
-│  │  - Idempotency check (optional)                            │ │
-│  │  - Correlation tracking                                     │ │
+│  │                  OpenHIM HTTP Bridge                        │ │
+│  │  - Convert CloudEvent → HTTP POST                          │ │
+│  │  - Simple source-based URL mapping (env vars)              │ │
+│  │  - POST to OpenHIM with CloudEvent payload                 │ │
+│  │  - Convert HTTP Response → CloudEvent                      │ │
+│  │  - Publish response to RabbitMQ (optional)                 │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                          │                                        │
 │                          ▼                                        │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │                    Event Router                             │ │
-│  │  - Route determination (type, source, content-based)       │ │
-│  │  - Multiple routing strategies                             │ │
-│  │  - Route validation & fallback                             │ │
-│  │  - Dynamic configuration reload                            │ │
-│  └────────────────────────────────────────────────────────────┘ │
+│                  ┌───────────────┐                               │
+│                  │    OpenHIM    │                               │
+│                  │  (handles all │                               │
+│                  │  routing to   │                               │
+│                  │  mediators)   │                               │
+│                  └───────┬───────┘                               │
 │                          │                                        │
 │          ┌───────────────┼───────────────┐                       │
 │          ▼               ▼               ▼                       │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐               │
-│  │  Mediator   │ │  Mediator   │ │   Client    │               │
-│  │  Service A  │ │  Service B  │ │  Services   │               │
+│  │  Mediator   │ │  Mediator   │ │  Mediator   │               │
+│  │  Service A  │ │  Service B  │ │  Service C  │               │
+│  │  (FHIR)     │ │ (Procure.)  │ │  (Custom)   │               │
 │  └─────────────┘ └─────────────┘ └─────────────┘               │
 │                                                                   │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │                  Error Handler                              │ │
-│  │  - DLQ routing for permanent failures                      │ │
-│  │  - Retry logic with exponential backoff                    │ │
-│  │  - Circuit breaker for downstream services                 │ │
-│  │  - Error classification & metrics                          │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                   │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │                 Observability Layer                         │ │
+│  │                 Observability (Basic)                       │ │
 │  │  - Pino structured logging                                 │ │
-│  │  - OpenTelemetry tracing (Jaeger)                          │ │
-│  │  - Prometheus metrics                                       │ │
-│  │  - PII/PHI masking                                         │ │
+│  │  - Correlation ID tracking                                  │ │
+│  │  - Basic error handling with DLQ                           │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Event Flow
+### Event Flow (SIMPLIFIED)
 
 ```
 ┌─────────────┐         ┌─────────────┐
@@ -379,181 +384,90 @@ Implement a robust CloudEvent consumer in the Interop Layer that:
        │ Consume
        ▼
 ┌──────────────────────────────────────┐
-│      Interop Layer Consumer          │
+│      Interop Layer Bridge            │
 │                                       │
 │  1. Deserialize CloudEvent           │
 │  2. Validate schema                  │
 │  3. Extract correlation ID           │
-│  4. Apply routing rules              │
-│  5. Forward to destination           │
-│  6. ACK/NACK message                 │
-│  7. Log & trace                      │
+│  4. Convert to HTTP POST             │
+│  5. POST to OpenHIM endpoint         │
+│  6. Receive HTTP response            │
+│  7. ACK message                      │
+│  8. Log & trace                      │
 └──────┬───────────────────────────────┘
        │
-       │ Route based on:
-       │ - event.type
-       │ - event.source
-       │ - event.subject
-       │ - content rules
+       │ HTTP POST
+       │ (All events → OpenHIM)
        │
        ▼
 ┌──────────────────────────────────────┐
-│         Destination Services         │
-│  - Mediator Services (OpenHIM)       │
-│  - Client Services                   │
-│  - Analytics Services                │
-│  - Notification Services             │
+│             OpenHIM Core             │
+│  - Receives CloudEvent as HTTP body  │
+│  - Routes to appropriate mediator    │
+│  - Handles authentication            │
+│  - Performs transformation           │
+│  - Returns HTTP response             │
+└──────┬───────────────────────────────┘
+       │
+       │ OpenHIM routes to
+       │ configured mediators
+       │
+       ▼
+┌──────────────────────────────────────┐
+│         Mediator Services            │
+│  - FHIR Mediator (health events)     │
+│  - Procurement Mediator (orders)     │
+│  - Custom Mediators (as needed)      │
 └──────────────────────────────────────┘
 ```
 
-### Routing Strategy
+### Bridge Strategy (SIMPLIFIED)
 
-The Interop Layer uses a **multi-strategy routing approach** to determine the destination for each CloudEvent.
+The Interop Layer uses a **simple source-based mapping** to route ALL CloudEvents to OpenHIM.
 
-#### Routing Strategies
+#### Key Principle
 
-**1. Type-Based Routing (Primary Strategy)**
-- Routes events based on `event.type` field
-- Example: `health.patient.registered` → `mediator-fhir-service`
-- Example: `order.approved` → `mediator-procurement-service`
-- Supports wildcard patterns: `health.patient.*`, `order.*`
-- Defined in routing configuration file
+**OpenHIM handles ALL routing logic.** The Interop Layer is purely a protocol bridge:
+- **FROM**: Event-driven architecture (RabbitMQ CloudEvents)
+- **TO**: Request-driven architecture (OpenHIM HTTP API)
 
-**2. Source-Based Routing**
-- Routes events based on `event.source` field
-- Example: `smile.health-service` → route to health mediators
-- Example: `smile.orders-service` → route to order mediators
-- Useful for service-level routing decisions
-
-**3. Content-Based Routing**
-- Routes events based on payload content
-- Example: Orders with `priority: 'urgent'` → fast-track queue
-- Example: Health events with `containsPHI: true` → secure mediator
-- Requires payload inspection
-
-**4. Hybrid Routing**
-- Combines multiple strategies
-- Example: Route by type + priority
-- Example: Route by source + data classification
-
-**5. Fallback/Default Routing**
-- When no specific route matches
-- Routes to a default mediator or client service
-- Prevents message loss
-
-#### Routing Configuration Structure
-
-```yaml
-routes:
-  # Health Service Routes
-  - name: "patient-registration-to-fhir"
-    source: "smile.health-service"
-    type: "health.patient.registered"
-    strategy: "type"
-    destination:
-      type: "mediator"
-      service: "fhir-mediator"
-      endpoint: "http://localhost:3010/fhir/patient"
-      transform: true
-    priority: 5
-    enabled: true
-
-  - name: "health-events-to-openhim"
-    source: "smile.health-service"
-    type: "health.*"
-    strategy: "type"
-    destination:
-      type: "openhim"
-      channel: "health-events"
-      endpoint: "http://localhost:5001/health"
-    priority: 3
-    enabled: true
-
-  # Order Service Routes
-  - name: "order-approved-to-procurement"
-    source: "smile.orders-service"
-    type: "order.approved"
-    strategy: "type"
-    destination:
-      type: "mediator"
-      service: "procurement-mediator"
-      endpoint: "http://localhost:3011/procurement/order"
-    priority: 7
-    enabled: true
-
-  - name: "urgent-orders-fast-track"
-    source: "smile.orders-service"
-    type: "order.*"
-    strategy: "content"
-    condition:
-      field: "data.eventData.priority"
-      operator: "equals"
-      value: "urgent"
-    destination:
-      type: "queue"
-      queue: "orders.urgent"
-      exchange: "orders.fast-track"
-    priority: 9
-    enabled: true
-
-  # Client Service Routes
-  - name: "all-events-to-audit"
-    source: "*"
-    type: "*"
-    strategy: "default"
-    destination:
-      type: "client"
-      service: "audit-service"
-      endpoint: "http://localhost:3006/audit"
-    priority: 1
-    enabled: true
-
-  # Fallback Route
-  - name: "fallback-route"
-    source: "*"
-    type: "*"
-    strategy: "fallback"
-    destination:
-      type: "queue"
-      queue: "interop.unrouted"
-      exchange: "interop.fallback"
-    priority: 0
-    enabled: true
-```
-
-#### Routing Decision Algorithm
+#### Simple Mapping Logic
 
 ```
 1. Receive CloudEvent from RabbitMQ queue
-2. Extract routing metadata (type, source, subject, priority)
-3. Load active routing rules from configuration
-4. Sort routes by priority (highest first)
-5. For each route (in priority order):
-   a. Check if route.enabled = true
-   b. Match route.source (wildcard support)
-   c. Match route.type (wildcard support)
-   d. If strategy = "content", evaluate condition
-   e. If all conditions match:
-      - Return matched route
-      - Break loop
-6. If no route matched:
-   - Use fallback route
-7. Execute route:
-   a. Transform event if needed
-   b. Send to destination
-   c. Handle response
-   d. ACK message on success
-   e. NACK message on failure (retry or DLQ)
+2. Validate CloudEvent schema
+3. Extract correlation ID
+4. Determine OpenHIM endpoint based on event.source:
+   - source: "smile.health-service" → POST to OPENHIM_HEALTH_ENDPOINT
+   - source: "smile.orders-service" → POST to OPENHIM_ORDERS_ENDPOINT
+   - source: "*" (fallback) → POST to OPENHIM_DEFAULT_ENDPOINT
+5. Convert CloudEvent to HTTP POST request body
+6. Send to OpenHIM with headers:
+   - Content-Type: application/cloudevents+json
+   - X-Correlation-ID: <extracted from event>
+   - Authorization: Basic <credentials>
+7. Receive HTTP response from OpenHIM
+8. ACK message on success (HTTP 2xx)
+9. NACK message on failure (HTTP 4xx/5xx)
+10. Log & trace entire flow
 ```
 
-#### Route Priority Guidelines
+#### No Complex Routing Needed
 
-- **Priority 9-10:** Critical/urgent events (STAT orders, critical lab results)
-- **Priority 7-8:** High priority (approvals, shipments, alerts)
-- **Priority 5-6:** Normal business events (create, update, workflow transitions)
-- **Priority 3-4:** Low priority (notifications, audit logs)
-- **Priority 1-2:** Background/async processing
-- **Priority 0:** Fallback/default routes
+**What we DON'T do:**
+- ❌ Type-based routing (OpenHIM does this)
+- ❌ Content-based routing (OpenHIM does this)
+- ❌ Priority-based routing (OpenHIM does this)
+- ❌ Wildcard pattern matching (OpenHIM does this)
+- ❌ Route configuration files (OpenHIM has its own)
+- ❌ Multiple destination types (only OpenHIM)
+
+**What we DO:**
+- ✅ Simple source → OpenHIM URL mapping (3 env vars)
+- ✅ CloudEvent validation
+- ✅ Protocol conversion (CloudEvents ↔ HTTP)
+- ✅ Correlation ID propagation
+- ✅ Basic error handling with DLQ
 
 ---
 
@@ -577,7 +491,7 @@ routes:
 
 ---
 
-## 🔧 Configuration Schema
+## 🔧 Configuration Schema (SIMPLIFIED)
 
 ### Environment Variables (.env)
 
@@ -607,22 +521,20 @@ DLQ_QUEUE=interop.dlq
 DLQ_EXCHANGE=interop.dlq.exchange
 DLQ_ROUTING_KEY=dlq.#
 
-# Retry Configuration
-RETRY_MAX_ATTEMPTS=3
-RETRY_INITIAL_DELAY=1000
-RETRY_MAX_DELAY=30000
-RETRY_BACKOFF_MULTIPLIER=2
+# OpenHIM Configuration (SIMPLIFIED - Only 3 endpoints needed!)
+OPENHIM_HEALTH_ENDPOINT=http://localhost:5001/health
+OPENHIM_ORDERS_ENDPOINT=http://localhost:5001/orders
+OPENHIM_DEFAULT_ENDPOINT=http://localhost:5001/events
+OPENHIM_USERNAME=interop@openhim.org
+OPENHIM_PASSWORD=interop-password
+OPENHIM_TIMEOUT=10000
 
-# Circuit Breaker Configuration
-CIRCUIT_BREAKER_THRESHOLD=5
-CIRCUIT_BREAKER_TIMEOUT=60000
-CIRCUIT_BREAKER_RESET_TIMEOUT=30000
+# HTTP Client Configuration
+HTTP_RETRY_ATTEMPTS=3
+HTTP_RETRY_DELAY=1000
+HTTP_REQUEST_TIMEOUT=10000
 
-# Routing Configuration
-ROUTING_CONFIG_PATH=./config/routing.yml
-ROUTING_RELOAD_INTERVAL=60000
-
-# OpenTelemetry Configuration
+# OpenTelemetry Configuration (Optional)
 OTEL_SERVICE_NAME=interop-layer
 OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces
 OTEL_TRACES_SAMPLER=always_on
@@ -632,239 +544,38 @@ HEALTH_CHECK_INTERVAL=30000
 HEALTH_CHECK_TIMEOUT=5000
 ```
 
-### Routing Configuration File (config/routing.yml)
+### No Complex Routing Configuration Needed!
 
-```yaml
-# Routing Configuration for Interop Layer
-# Format: YAML
+**Architecture Decision:** We do NOT need a complex YAML routing configuration file.
 
-metadata:
-  version: "1.0.0"
-  lastUpdated: "2025-10-10T00:00:00Z"
-  description: "Event routing configuration for SMILE Interop Layer"
+**Why?** Because OpenHIM already has its own routing configuration. The Interop Layer only needs to know which OpenHIM endpoint to POST to based on the event source.
 
-settings:
-  # Default behavior when no route matches
-  fallbackBehavior: "route-to-fallback-queue"
-
-  # Enable/disable routing rule validation on load
-  validateOnLoad: true
-
-  # Enable/disable dynamic route reloading
-  dynamicReload: true
-  reloadInterval: 60000 # milliseconds
-
-  # Enable route metrics
-  enableMetrics: true
-
-routes:
-  #
-  # Health Service Routes
-  #
-  - name: "patient-events-to-fhir"
-    description: "Route patient lifecycle events to FHIR mediator"
-    enabled: true
-    source: "smile.health-service"
-    type: "health.patient.*"
-    strategy: "type"
-    priority: 6
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3010/fhir/patient"
-      timeout: 5000
-      headers:
-        Content-Type: "application/json"
-        X-Service: "interop-layer"
-    transform:
-      enabled: true
-      type: "fhir-r4"
-    retry:
-      enabled: true
-      maxAttempts: 3
-      backoffMs: 1000
-
-  - name: "vital-signs-to-analytics"
-    description: "Route vital signs to analytics service"
-    enabled: true
-    source: "smile.health-service"
-    type: "health.vitals.*"
-    strategy: "type"
-    priority: 5
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3007/analytics/vitals"
-      timeout: 3000
-    transform:
-      enabled: false
-    retry:
-      enabled: true
-      maxAttempts: 2
-
-  - name: "critical-lab-results"
-    description: "Route critical lab results with high priority"
-    enabled: true
-    source: "smile.health-service"
-    type: "health.lab.result-critical"
-    strategy: "type"
-    priority: 10
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3008/alerts/critical-lab"
-      timeout: 2000
-    transform:
-      enabled: false
-    retry:
-      enabled: true
-      maxAttempts: 5
-      backoffMs: 500
-
-  #
-  # Order Service Routes
-  #
-  - name: "order-lifecycle-events"
-    description: "Route all order lifecycle events to procurement system"
-    enabled: true
-    source: "smile.orders-service"
-    type: "order.*"
-    strategy: "type"
-    priority: 5
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3011/procurement/events"
-      timeout: 5000
-    transform:
-      enabled: true
-      type: "procurement-format"
-    retry:
-      enabled: true
-      maxAttempts: 3
-
-  - name: "urgent-orders-fast-track"
-    description: "Fast-track urgent orders"
-    enabled: true
-    source: "smile.orders-service"
-    type: "order.*"
-    strategy: "content"
-    priority: 9
-    condition:
-      field: "data.eventData.priority"
-      operator: "equals"
-      value: "urgent"
-    destination:
-      type: "queue"
-      exchange: "orders.fast-track"
-      queue: "orders.urgent"
-      routingKey: "orders.urgent"
-    transform:
-      enabled: false
-    retry:
-      enabled: true
-      maxAttempts: 5
-
-  - name: "order-alerts-to-notification"
-    description: "Route order alerts to notification service"
-    enabled: true
-    source: "smile.orders-service"
-    type: "order.alerts.*"
-    strategy: "type"
-    priority: 8
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3009/notifications/send"
-      timeout: 3000
-    transform:
-      enabled: true
-      type: "notification-format"
-    retry:
-      enabled: true
-      maxAttempts: 2
-
-  #
-  # Cross-Cutting Routes
-  #
-  - name: "all-events-to-audit"
-    description: "Send all events to audit service for compliance"
-    enabled: true
-    source: "*"
-    type: "*"
-    strategy: "default"
-    priority: 1
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3006/audit/log"
-      timeout: 2000
-    transform:
-      enabled: false
-    retry:
-      enabled: false # Don't retry audit logging
-
-  - name: "phi-events-to-secure-storage"
-    description: "Route events containing PHI to secure storage"
-    enabled: true
-    source: "smile.health-service"
-    type: "*"
-    strategy: "content"
-    priority: 7
-    condition:
-      field: "data.metadata.containsPHI"
-      operator: "equals"
-      value: true
-    destination:
-      type: "http"
-      method: "POST"
-      endpoint: "http://localhost:3012/secure-storage/phi"
-      timeout: 5000
-      headers:
-        X-Security-Level: "high"
-        X-Encryption-Required: "true"
-    transform:
-      enabled: true
-      type: "phi-encryption"
-    retry:
-      enabled: true
-      maxAttempts: 5
-
-  #
-  # Fallback Route
-  #
-  - name: "fallback-route"
-    description: "Default route for unmatched events"
-    enabled: true
-    source: "*"
-    type: "*"
-    strategy: "fallback"
-    priority: 0
-    destination:
-      type: "queue"
-      exchange: "interop.fallback"
-      queue: "interop.unrouted"
-      routingKey: "unrouted.#"
-    transform:
-      enabled: false
-    retry:
-      enabled: false
+**Simple mapping in code:**
+```typescript
+function getOpenHIMEndpoint(eventSource: string): string {
+  if (eventSource === 'smile.health-service') {
+    return process.env.OPENHIM_HEALTH_ENDPOINT;
+  } else if (eventSource === 'smile.orders-service') {
+    return process.env.OPENHIM_ORDERS_ENDPOINT;
+  } else {
+    return process.env.OPENHIM_DEFAULT_ENDPOINT;
+  }
+}
 ```
 
-### TypeScript Configuration Interfaces
+That's it! No YAML files, no complex routing engine, no 500+ lines of configuration.
+
+### TypeScript Configuration Interfaces (SIMPLIFIED)
 
 ```typescript
 /**
- * Main configuration interface for Interop Layer
+ * Main configuration interface for Interop Layer (SIMPLIFIED)
  */
 export interface InteropLayerConfig {
   service: ServiceConfig;
   rabbitmq: RabbitMQConfig;
   consumer: ConsumerConfig;
-  routing: RoutingConfig;
-  retry: RetryConfig;
-  circuitBreaker: CircuitBreakerConfig;
-  observability: ObservabilityConfig;
+  openhim: OpenHIMConfig; // SIMPLIFIED - just endpoint mapping
 }
 
 /**
@@ -872,7 +583,6 @@ export interface InteropLayerConfig {
  */
 export interface ServiceConfig {
   name: string;
-  version: string;
   port: number;
   environment: 'development' | 'production' | 'test';
   logLevel: 'debug' | 'info' | 'warn' | 'error';
@@ -886,11 +596,6 @@ export interface RabbitMQConfig {
   prefetchCount: number;
   reconnectDelay: number;
   maxReconnectAttempts: number;
-  heartbeat: number;
-  socketOptions?: {
-    timeout?: number;
-    keepAlive?: boolean;
-  };
 }
 
 /**
@@ -905,15 +610,7 @@ export interface QueueConsumerConfig {
   name: string;
   queue: string;
   exchange: string;
-  exchangeType: 'topic' | 'direct' | 'fanout';
   routingKey: string;
-  enabled: boolean;
-  prefetch?: number;
-  options?: {
-    durable?: boolean;
-    autoDelete?: boolean;
-    exclusive?: boolean;
-  };
 }
 
 /**
@@ -923,123 +620,45 @@ export interface DLQConfig {
   queue: string;
   exchange: string;
   routingKey: string;
-  ttl?: number; // Message TTL in DLQ
-  maxLength?: number; // Max messages in DLQ
 }
 
 /**
- * Routing configuration loaded from YAML
+ * OpenHIM Bridge Configuration (SIMPLIFIED)
  */
-export interface RoutingConfig {
-  metadata: RoutingMetadata;
-  settings: RoutingSettings;
-  routes: RouteDefinition[];
-}
+export interface OpenHIMConfig {
+  // Simple source-to-endpoint mapping
+  healthEndpoint: string;    // For smile.health-service events
+  ordersEndpoint: string;    // For smile.orders-service events
+  defaultEndpoint: string;   // Fallback for unknown sources
 
-export interface RoutingMetadata {
-  version: string;
-  lastUpdated: string;
-  description: string;
-}
+  // Authentication
+  username: string;
+  password: string;
 
-export interface RoutingSettings {
-  fallbackBehavior: 'route-to-fallback-queue' | 'drop' | 'error';
-  validateOnLoad: boolean;
-  dynamicReload: boolean;
-  reloadInterval: number;
-  enableMetrics: boolean;
-}
-
-export interface RouteDefinition {
-  name: string;
-  description?: string;
-  enabled: boolean;
-  source: string; // Wildcard support: "smile.health-service", "*"
-  type: string; // Wildcard support: "health.patient.*", "*"
-  strategy: 'type' | 'source' | 'content' | 'hybrid' | 'default' | 'fallback';
-  priority: number; // 0-10
-  condition?: RouteCondition; // For content-based routing
-  destination: RouteDestination;
-  transform?: TransformConfig;
-  retry?: RouteRetryConfig;
-}
-
-export interface RouteCondition {
-  field: string; // JSONPath expression
-  operator: 'equals' | 'notEquals' | 'contains' | 'greaterThan' | 'lessThan' | 'regex';
-  value: any;
-}
-
-export interface RouteDestination {
-  type: 'http' | 'queue' | 'topic' | 'openhim' | 'webhook';
-  // For HTTP destinations
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  endpoint?: string;
-  timeout?: number;
-  headers?: Record<string, string>;
-  // For queue destinations
-  exchange?: string;
-  queue?: string;
-  routingKey?: string;
-}
-
-export interface TransformConfig {
-  enabled: boolean;
-  type?: string; // 'fhir-r4', 'hl7-v2', 'custom'
-  config?: Record<string, any>;
-}
-
-export interface RouteRetryConfig {
-  enabled: boolean;
-  maxAttempts?: number;
-  backoffMs?: number;
+  // HTTP client settings
+  timeout: number;
+  retryAttempts: number;
+  retryDelay: number;
 }
 
 /**
- * Retry strategy configuration
+ * OpenHIM HTTP Request
  */
-export interface RetryConfig {
-  maxAttempts: number;
-  initialDelay: number;
-  maxDelay: number;
-  backoffMultiplier: number;
-  retryableErrors: string[]; // Error codes/types to retry
+export interface OpenHIMRequest {
+  endpoint: string;
+  method: 'POST';
+  headers: Record<string, string>;
+  body: any; // CloudEvent
 }
 
 /**
- * Circuit breaker configuration
+ * OpenHIM HTTP Response
  */
-export interface CircuitBreakerConfig {
-  threshold: number; // Number of failures before opening
-  timeout: number; // Time in open state before attempting reset
-  resetTimeout: number; // Time to wait before closing circuit
-  monitoringPeriod: number; // Period to track failures
-}
-
-/**
- * Observability configuration
- */
-export interface ObservabilityConfig {
-  logging: {
-    enabled: boolean;
-    level: string;
-    masking: {
-      enabled: boolean;
-      fields: string[]; // Fields to mask in logs
-    };
-  };
-  tracing: {
-    enabled: boolean;
-    serviceName: string;
-    endpoint: string;
-    sampler: 'always_on' | 'always_off' | 'trace_id_ratio';
-    sampleRate?: number;
-  };
-  metrics: {
-    enabled: boolean;
-    port: number;
-    path: string;
-  };
+export interface OpenHIMResponse {
+  statusCode: number;
+  headers: Record<string, string>;
+  body: any;
+  timestamp: string;
 }
 ```
 
@@ -1053,6 +672,49 @@ _None at this time_
 
 ## 📝 Notes & Decisions
 
+### 2025-10-13 - MAJOR ARCHITECTURE SIMPLIFICATION
+
+**Critical Decision:** Simplified Interop Layer from complex routing engine to simple protocol bridge.
+
+#### Background
+During Task 5 implementation, we completed:
+- RouteMatchEngine (195 lines + 460 lines tests) - pattern matching, priority sorting
+- RoutingConfigLoader (252 lines + 387 lines tests) - YAML config loading/validation
+- Complex routing types (195 lines) - 5 routing strategies, conditions, wildcards
+- **Total:** ~1,489 lines of complex routing code
+
+#### Problem Identified
+User review revealed **over-engineering**: The complex routing duplicated OpenHIM's functionality. OpenHIM already:
+- Routes events to appropriate mediators
+- Handles authentication and authorization
+- Performs content transformation
+- Manages priority and conditions
+
+#### Decision Made
+**Simplify to protocol bridge only:**
+- ❌ Remove complex routing engine (RouteMatchEngine, RoutingConfigLoader)
+- ❌ Remove 5 routing strategies (type, source, content, hybrid, fallback)
+- ❌ Remove YAML routing configuration file
+- ❌ Remove wildcard pattern matching
+- ✅ Keep simple source → OpenHIM URL mapping (3 env vars)
+- ✅ Keep CloudEvent validation and consumer components
+- ✅ Keep protocol conversion (CloudEvents ↔ HTTP)
+
+#### Rationale
+1. **Single Responsibility:** Interop Layer should ONLY bridge protocols, not route/transform
+2. **Avoid Duplication:** OpenHIM is already configured to handle routing
+3. **Simplicity:** 3 environment variables vs. 500+ lines of YAML config
+4. **Maintainability:** Less code = fewer bugs, easier to understand
+5. **Future-Proof:** Business rules belong in domain layer, not interop layer
+
+#### Impact
+- Reduced complexity: ~1,489 lines removed
+- Simplified implementation: Task 5 now ~200 lines instead of 1,000+
+- Faster development and testing
+- Clearer architecture boundaries
+
+---
+
 ### 2025-10-10 - Task 1 & Task 2 Completed
 
 #### Task 1: Review Completed
@@ -1062,54 +724,41 @@ _None at this time_
   - **Decision:** Create enhanced consumer in interop-layer that uses @smile/cloud-events as a base
   - **Rationale:** Allows service-specific customization without affecting other services
 
-#### Task 2: Architecture & Routing Strategy Defined
-- **Architecture Decisions:**
+#### Task 2: Architecture & Routing Strategy Defined (SUPERSEDED by 2025-10-13 simplification)
+- **Architecture Decisions (ORIGINAL - now simplified):**
   1. **Multi-Component Architecture:**
-     - Connection Manager: Handles RabbitMQ connections with pooling and retry
-     - Event Consumer: Subscribes to multiple queues and deserializes CloudEvents
-     - Message Handler: Validates, enriches, and tracks correlation IDs
-     - Event Router: Determines destination using multiple strategies
-     - Error Handler: DLQ routing, retry logic, circuit breaker
-     - Observability Layer: Logging, tracing, metrics with PII/PHI masking
+     - Connection Manager: Handles RabbitMQ connections with pooling and retry ✅ KEPT
+     - Event Consumer: Subscribes to multiple queues and deserializes CloudEvents ✅ KEPT
+     - Message Handler: Validates, enriches, and tracks correlation IDs ✅ KEPT
+     - ~~Event Router: Determines destination using multiple strategies~~ ❌ REMOVED
+     - ~~Error Handler: DLQ routing, retry logic, circuit breaker~~ ⚠️ SIMPLIFIED (basic DLQ only)
+     - ~~Observability Layer: Logging, tracing, metrics with PII/PHI masking~~ ⚠️ SIMPLIFIED (basic logging)
 
-  2. **Routing Strategy:**
-     - Primary: Type-based routing (matches event.type with wildcard support)
-     - Secondary: Source-based routing (matches event.source)
-     - Advanced: Content-based routing (evaluates payload conditions)
-     - Hybrid: Combines multiple strategies
-     - Fallback: Default route for unmatched events
-     - **Priority-based route selection:** Routes sorted by priority (0-10), highest first
+  2. **~~Routing Strategy~~** ❌ REPLACED with simple source-based mapping:
+     - smile.health-service → OPENHIM_HEALTH_ENDPOINT
+     - smile.orders-service → OPENHIM_ORDERS_ENDPOINT
+     - * (fallback) → OPENHIM_DEFAULT_ENDPOINT
 
-  3. **Configuration Approach:**
-     - Environment variables for connection and system config
-     - YAML file for routing rules (supports hot-reload)
-     - TypeScript interfaces for type safety
-     - Separation of concerns: system config vs. business routing rules
+  3. **Configuration Approach (SIMPLIFIED):**
+     - Environment variables ONLY (no YAML files)
+     - Simple OpenHIM endpoint mapping (3 env vars)
+     - No complex routing rules
 
-  4. **Queue Strategy:**
+  4. **Queue Strategy:** ✅ UNCHANGED
      - Two dedicated consumer queues: `interop.health.queue`, `interop.orders.queue`
      - One DLQ: `interop.dlq` for failed messages
-     - Fallback queue: `interop.unrouted` for unmatched events
-     - Binding pattern: `health.#` and `orders.#` (all events from each exchange)
+     - Binding pattern: `health.#` and `orders.#`
 
-  5. **Error Handling Strategy:**
-     - Retry with exponential backoff (configurable attempts and delays)
-     - Circuit breaker for downstream service protection
-     - DLQ for permanent failures or exhausted retries
-     - Error classification: retryable vs. non-retryable
+  5. **Error Handling Strategy (SIMPLIFIED):**
+     - Basic DLQ for failed messages
+     - HTTP retry with simple backoff
+     - No circuit breaker (not needed for single destination)
 
-  6. **Observability Strategy:**
+  6. **Observability Strategy (SIMPLIFIED):**
      - Structured logging with Pino
-     - OpenTelemetry tracing for full event lifecycle
-     - Correlation ID propagation across all components
-     - PII/PHI masking in all logs
-     - Prometheus metrics for monitoring
-
-  7. **Security & Compliance:**
-     - PHI detection based on event metadata (`containsPHI` flag)
-     - Automatic routing of PHI events to secure storage
-     - Field-level masking in logs
-     - Audit trail for all event processing
+     - Correlation ID tracking
+     - Basic error handling
+     - (OpenTelemetry and Prometheus optional for future)
 
 ---
 
@@ -1123,5 +772,5 @@ _None at this time_
 
 ---
 
-**Last Updated:** 2025-10-10 (Task 2 completed - Architecture and routing strategy defined)
+**Last Updated:** 2025-10-13 (MAJOR UPDATE - Architecture simplified to protocol bridge only)
 **Updated By:** Claude Code
