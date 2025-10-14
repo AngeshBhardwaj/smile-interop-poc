@@ -24,11 +24,13 @@ This POC implements a clean, event-driven architecture with the following compon
 ### Setup
 
 1. **Install dependencies and build**:
+
    ```bash
    make setup
    ```
 
 2. **Start infrastructure services**:
+
    ```bash
    make docker-up
    ```
@@ -43,12 +45,14 @@ This POC implements a clean, event-driven architecture with the following compon
 #### 🏥 SMILE Services
 
 **Health Service** (HIPAA-compliant Patient Registration)
+
 - **Swagger API Docs**: http://localhost:3004/api/docs
 - **Health Check**: http://localhost:3004/health
 - **Features**: Patient registration, PII/PHI data masking, HIPAA audit logging
 - **Auth**: API Key: `health-api-key-dev` OR Bearer: `mock-jwt-token`
 
 **Orders Service** (Order Lifecycle Management)
+
 - **Swagger API Docs**: http://localhost:3005/api/docs
 - **Health Check**: http://localhost:3005/health
 - **Features**: Complete order workflow, state transitions, return processing
@@ -134,6 +138,7 @@ smile-interop-poc/
 - **Test Coverage**: 90%+ (265 tests passing)
 
 **Features:**
+
 - Patient registration with full PII/PHI protection
 - Automatic data masking in logs and events
 - HIPAA-compliant audit trails
@@ -142,11 +147,13 @@ smile-interop-poc/
 - Comprehensive validation and error handling
 
 **Order Workflow States:**
+
 ```
 Registration → Active → Inactive/Deceased
 ```
 
 **API Endpoints:**
+
 - `POST /api/v1/patients` - Register new patient
 - `GET /api/v1/patients` - List patients (masked data)
 - `GET /api/v1/patients/:id` - Get patient details
@@ -164,6 +171,7 @@ Registration → Active → Inactive/Deceased
 - **Test Coverage**: 90%+ (265 tests passing)
 
 **Features:**
+
 - Complete order lifecycle management
 - State-driven workflow with validation
 - Support for medicines, equipment, supplies, vaccines
@@ -173,6 +181,7 @@ Registration → Active → Inactive/Deceased
 - Comprehensive audit logging
 
 **Order Workflow States:**
+
 ```
 DRAFT → SUBMITTED → APPROVED → PACKED → SHIPPED → RECEIVED → FULFILLED
   ↑                  ↓                              ↓
@@ -181,25 +190,29 @@ DRAFT → SUBMITTED → APPROVED → PACKED → SHIPPED → RECEIVED → FULFILL
 
 **API Endpoints:**
 
-*Core CRUD:*
+_Core CRUD:_
+
 - `POST /api/v1/orders` - Create new order (DRAFT)
 - `GET /api/v1/orders` - List orders with filtering
 - `GET /api/v1/orders/:id` - Get order details
 - `PUT /api/v1/orders/:id` - Update order (DRAFT/REJECTED only)
 - `DELETE /api/v1/orders/:id` - Delete order (DRAFT only)
 
-*State Transitions:*
+_State Transitions:_
+
 - `POST /api/v1/orders/:id/submit` - Submit for approval
 - `POST /api/v1/orders/:id/approve` - Approve order
 - `POST /api/v1/orders/:id/reject` - Reject order
 
-*Fulfillment:*
+_Fulfillment:_
+
 - `POST /api/v1/orders/:id/pack` - Mark as packed
 - `POST /api/v1/orders/:id/ship` - Mark as shipped
 - `POST /api/v1/orders/:id/receive` - Mark as received
 - `POST /api/v1/orders/:id/fulfill` - Mark as fulfilled
 
-*Returns:*
+_Returns:_
+
 - `POST /api/v1/orders/:id/return` - Initiate return
 - `POST /api/v1/orders/:id/complete-return` - Complete return
 
@@ -225,6 +238,7 @@ make docker-up    # Starts all infrastructure and application services
 ```
 
 This command will:
+
 - Build Docker images for health-service and orders-service
 - Start all infrastructure services (RabbitMQ, MongoDB, Redis, etc.)
 - Start application services with proper health checks
@@ -241,10 +255,12 @@ make docker-down  # Stops and removes all containers
 The complete Docker stack includes:
 
 **Application Services:**
+
 - **health-service**: HIPAA-compliant patient registration (Port 3004)
 - **orders-service**: Order lifecycle management (Port 3005)
 
 **Infrastructure Services:**
+
 - **RabbitMQ**: Message broker with management UI (Ports 5672, 15672)
 - **MongoDB**: Database for OpenHIM (Port 27017)
 - **OpenHIM Core**: Health information mediator (Ports 5000, 5001, 8080)
@@ -257,6 +273,7 @@ The complete Docker stack includes:
 ### Health Checks
 
 All services include health checks to ensure proper startup sequence:
+
 - Application services wait for RabbitMQ to be healthy
 - OpenHIM Console waits for OpenHIM Core to be healthy
 - MongoDB, RabbitMQ, and Redis have built-in health checks
@@ -264,6 +281,7 @@ All services include health checks to ensure proper startup sequence:
 ### Swagger in Docker
 
 Both health-service and orders-service Swagger UIs are fully functional in Docker mode:
+
 - **Health Service**: http://localhost:3004/api/docs
 - **Orders Service**: http://localhost:3005/api/docs
 
@@ -295,7 +313,6 @@ make logs-interop      # Interop layer only
 
 ## 📖 Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Claude Code guidance
 - [Architecture Decision Records](./docs/adr/) - Design decisions
 - [API Documentation](./docs/api/) - Auto-generated API docs
 
