@@ -157,7 +157,7 @@ export class InteropService {
       });
 
       try {
-        // Send to OpenHIM via bridge
+        // Send CloudEvent to OpenHIM
         const result = await this.openHIMBridge.sendToOpenHIM(event, correlationId);
 
         if (!result.success) {

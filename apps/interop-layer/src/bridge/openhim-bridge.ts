@@ -12,6 +12,7 @@
  */
 
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import https from 'https';
 import { logger } from '@smile/common';
 
 /**
@@ -83,6 +84,83 @@ export class OpenHIMBridge {
   }
 
   /**
+   * Test helper: Send CloudEvent to an external webhook (no auth)
+   * This is intended for manual validation only (posts to webhook.site)
+   *
+   * @param event - CloudEvent object
+   * @param correlationId - Correlation ID for tracing
+   */
+  public async sendToWebhookTest(event: any, correlationId: string): Promise<OpenHIMResponse> {
+    const startTime = Date.now();
+    const endpoint = 'https://webhook.site/e0bf3b4a-4914-4e44-a97e-fa9fd179909c';
+
+    try {
+      const requestConfig: AxiosRequestConfig = {
+        headers: {
+          'Content-Type': CONTENT_TYPE,
+          [CORRELATION_HEADER]: correlationId,
+        },
+        timeout: this.config.timeout,
+      };
+
+      logger.info('Sending CloudEvent to webhook test endpoint', {
+        endpoint,
+        eventType: event?.type,
+        eventSource: event?.source,
+        eventId: event?.id,
+        correlationId,
+      });
+
+      const response = await axios.post(endpoint, event, requestConfig);
+
+      const responseTime = Date.now() - startTime;
+      this.recordSuccess(responseTime);
+
+      logger.info('Webhook test request successful', {
+        endpoint,
+        statusCode: response.status,
+        statusText: response.statusText,
+        responseTime,
+        correlationId,
+      });
+
+      return {
+        success: true,
+        statusCode: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      this.recordFailure(responseTime);
+
+      const axiosErr = error as AxiosError;
+      if (axiosErr.response) {
+        logger.error('Webhook test HTTP error response', {
+          endpoint,
+          statusCode: axiosErr.response.status,
+          statusText: axiosErr.response.statusText,
+          data: axiosErr.response.data,
+          correlationId,
+        });
+      } else {
+        logger.error('Webhook test network/unknown error', {
+          message: axiosErr.message,
+          code: axiosErr.code,
+          correlationId,
+        });
+      }
+
+      return {
+        success: false,
+        error: axiosErr.message,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
+  /**
    * Validate configuration
    *
    * @param config - Configuration to validate
@@ -137,6 +215,8 @@ export class OpenHIMBridge {
     const startTime = Date.now();
 
     // Determine endpoint based on source (declare outside try for error logging)
+    // NOTE: Currently all events go to /smile-default channel
+    // TODO: In future, route to specific channels based on event type or business logic
     const endpoint = this.getEndpointForSource(event.source);
 
     try {
@@ -148,6 +228,11 @@ export class OpenHIMBridge {
           Authorization: this.buildAuthHeader(),
         },
         timeout: this.config.timeout,
+        // DEV ONLY: Bypass SSL certificate validation for self-signed certs
+        // TODO: Remove in production or configure proper SSL certificates
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: false,
+        }),
       };
 
       logger.info('Sending CloudEvent to OpenHIM', {

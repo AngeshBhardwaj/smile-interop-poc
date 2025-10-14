@@ -286,12 +286,13 @@ services:
 
       # OpenHIM Configuration
       OPENHIM_API_URL: https://openhim-core:8080
-      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_USERNAME: smile-poc
       OPENHIM_PASSWORD: password
-      # Explicit bridge endpoints (use service DNS so inter-container HTTP works)
-      OPENHIM_HEALTH_ENDPOINT: "http://openhim-core:5001/health"
-      OPENHIM_ORDERS_ENDPOINT: "http://openhim-core:5001/orders"
-      OPENHIM_DEFAULT_ENDPOINT: "http://openhim-core:5001/events"
+      # Channel endpoints - Currently all events route to /smile-default
+      # TODO: Future enhancement - route to specific channels based on event type
+      OPENHIM_HEALTH_ENDPOINT: "https://openhim-core:5000/smile-default"
+      OPENHIM_ORDERS_ENDPOINT: "https://openhim-core:5000/smile-default"
+      OPENHIM_DEFAULT_ENDPOINT: "https://openhim-core:5000/smile-default"
     depends_on:
       rabbitmq:
         condition: service_healthy
