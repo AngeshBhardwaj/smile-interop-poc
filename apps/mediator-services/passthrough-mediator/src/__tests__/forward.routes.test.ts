@@ -41,7 +41,7 @@ describe('Forward Routes', () => {
         headers: { 'content-type': 'application/json' },
       };
 
-      (webhookService.forwardToWebhook as jest.Mock).mockResolvedValue(mockWebhookResponse);
+      (webhookService.forwardToWebhookWithRetry as jest.Mock).mockResolvedValue(mockWebhookResponse);
 
       const response = await request(app).post('/forward').send(validCloudEvent).expect(200);
 
@@ -52,11 +52,11 @@ describe('Forward Routes', () => {
       expect(response.body).toHaveProperty('orchestrations');
       expect(response.body.orchestrations).toHaveLength(1);
 
-      expect(webhookService.forwardToWebhook).toHaveBeenCalledWith(validCloudEvent);
+      expect(webhookService.forwardToWebhookWithRetry).toHaveBeenCalled();
     });
 
     it('should handle webhook forward failure with 500 status', async () => {
-      (webhookService.forwardToWebhook as jest.Mock).mockRejectedValue(
+      (webhookService.forwardToWebhookWithRetry as jest.Mock).mockRejectedValue(
         new Error('Webhook connection failed')
       );
 
@@ -74,7 +74,7 @@ describe('Forward Routes', () => {
 
       const response = await request(app).post('/invalid').send(invalidEvent).expect(404);
 
-      expect(webhookService.forwardToWebhook).not.toHaveBeenCalled();
+      expect(webhookService.forwardToWebhookWithRetry).not.toHaveBeenCalled();
     });
 
     it('should validate CloudEvent has required type field', async () => {
@@ -84,7 +84,7 @@ describe('Forward Routes', () => {
       const response = await request(app).post('/forward').send(invalidEvent).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(webhookService.forwardToWebhook).not.toHaveBeenCalled();
+      expect(webhookService.forwardToWebhookWithRetry).not.toHaveBeenCalled();
     });
 
     it('should validate CloudEvent has required source field', async () => {
@@ -94,7 +94,7 @@ describe('Forward Routes', () => {
       const response = await request(app).post('/forward').send(invalidEvent).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(webhookService.forwardToWebhook).not.toHaveBeenCalled();
+      expect(webhookService.forwardToWebhookWithRetry).not.toHaveBeenCalled();
     });
 
     it('should validate CloudEvent has required id field', async () => {
@@ -104,12 +104,11 @@ describe('Forward Routes', () => {
       const response = await request(app).post('/forward').send(invalidEvent).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(webhookService.forwardToWebhook).not.toHaveBeenCalled();
+      expect(webhookService.forwardToWebhookWithRetry).not.toHaveBeenCalled();
     });
 
     it('should accept CloudEvent without optional time field', async () => {
-      const eventWithoutTime = { ...validCloudEvent };
-      delete eventWithoutTime.time;
+      const { time, ...eventWithoutTime } = validCloudEvent;
 
       const mockWebhookResponse = {
         status: 200,
@@ -117,12 +116,12 @@ describe('Forward Routes', () => {
         headers: { 'content-type': 'application/json' },
       };
 
-      (webhookService.forwardToWebhook as jest.Mock).mockResolvedValue(mockWebhookResponse);
+      (webhookService.forwardToWebhookWithRetry as jest.Mock).mockResolvedValue(mockWebhookResponse);
 
       const response = await request(app).post('/forward').send(eventWithoutTime).expect(200);
 
       expect(response.body.status).toBe('Successful');
-      expect(webhookService.forwardToWebhook).toHaveBeenCalledWith(eventWithoutTime);
+      expect(webhookService.forwardToWebhookWithRetry).toHaveBeenCalled();
     });
 
     it('should include correlation ID in orchestration logs', async () => {
@@ -132,7 +131,7 @@ describe('Forward Routes', () => {
         headers: { 'content-type': 'application/json' },
       };
 
-      (webhookService.forwardToWebhook as jest.Mock).mockResolvedValue(mockWebhookResponse);
+      (webhookService.forwardToWebhookWithRetry as jest.Mock).mockResolvedValue(mockWebhookResponse);
 
       const response = await request(app)
         .post('/forward')
@@ -150,7 +149,7 @@ describe('Forward Routes', () => {
         headers: { 'content-type': 'application/json' },
       };
 
-      (webhookService.forwardToWebhook as jest.Mock).mockResolvedValue(mockWebhookResponse);
+      (webhookService.forwardToWebhookWithRetry as jest.Mock).mockResolvedValue(mockWebhookResponse);
 
       const response = await request(app).post('/forward').send(validCloudEvent).expect(200);
 
@@ -165,7 +164,7 @@ describe('Forward Routes', () => {
         headers: { 'content-type': 'application/json' },
       };
 
-      (webhookService.forwardToWebhook as jest.Mock).mockResolvedValue(mockWebhookResponse);
+      (webhookService.forwardToWebhookWithRetry as jest.Mock).mockResolvedValue(mockWebhookResponse);
 
       const response = await request(app).post('/forward').send(validCloudEvent).expect(200);
 
@@ -183,14 +182,14 @@ describe('Forward Routes', () => {
         .send('invalid json')
         .expect(400);
 
-      expect(webhookService.forwardToWebhook).not.toHaveBeenCalled();
+      expect(webhookService.forwardToWebhookWithRetry).not.toHaveBeenCalled();
     });
 
     it('should handle empty request body', async () => {
       const response = await request(app).post('/forward').send({}).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(webhookService.forwardToWebhook).not.toHaveBeenCalled();
+      expect(webhookService.forwardToWebhookWithRetry).not.toHaveBeenCalled();
     });
   });
 

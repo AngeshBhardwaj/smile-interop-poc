@@ -44,6 +44,8 @@ describe('Configuration Loader', () => {
     });
 
     it('should apply default values for optional fields', () => {
+      delete process.env.NODE_ENV; // Remove to test default value
+      delete process.env.LOG_LEVEL; // Remove to test default value
       process.env.OPENHIM_API_URL = 'https://localhost:8080';
       process.env.OPENHIM_USERNAME = 'test-user';
       process.env.OPENHIM_PASSWORD = 'test-password';

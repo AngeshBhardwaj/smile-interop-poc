@@ -128,9 +128,10 @@ forwardRouter.post('/', async (req: Request, res: Response) => {
     });
 
     // Build error response for OpenHIM
-    const errorResponse: MediatorResponse = {
+    const errorResponse: any = {
       'x-mediator-urn': 'urn:mediator:smile-passthrough',
       status: 'Failed',
+      error: error.message, // Add error at root level for easy access
       response: {
         status: 500,
         headers: { 'content-type': 'application/json' },

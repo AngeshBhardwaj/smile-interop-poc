@@ -87,39 +87,33 @@ describe('Webhook Service', () => {
     });
 
     it('should handle webhook returning 500 error', async () => {
-      const mockError = {
-        response: {
-          status: 500,
-          data: { error: 'Internal Server Error' },
-          headers: {},
-          statusText: 'Internal Server Error',
-        },
-        message: 'Request failed with status code 500',
+      const mockError = new Error('Request failed with status code 500');
+      (mockError as any).response = {
+        status: 500,
+        data: { error: 'Internal Server Error' },
+        headers: {},
+        statusText: 'Internal Server Error',
       };
 
-      mockedAxios.post.mockRejectedValue(mockError);
+      mockedAxios.post.mockRejectedValueOnce(mockError);
 
-      await expect(forwardToWebhook(validCloudEvent)).rejects.toThrow();
+      await expect(forwardToWebhook(validCloudEvent)).rejects.toThrow('Request failed with status code 500');
     });
 
     it('should handle network timeout', async () => {
-      const mockError = {
-        code: 'ECONNABORTED',
-        message: 'timeout of 10000ms exceeded',
-      };
+      const mockError = new Error('timeout of 10000ms exceeded');
+      (mockError as any).code = 'ECONNABORTED';
 
-      mockedAxios.post.mockRejectedValue(mockError);
+      mockedAxios.post.mockRejectedValueOnce(mockError);
 
       await expect(forwardToWebhook(validCloudEvent)).rejects.toThrow('timeout');
     });
 
     it('should handle network connection refused', async () => {
-      const mockError = {
-        code: 'ECONNREFUSED',
-        message: 'connect ECONNREFUSED 127.0.0.1:3000',
-      };
+      const mockError = new Error('connect ECONNREFUSED 127.0.0.1:3000');
+      (mockError as any).code = 'ECONNREFUSED';
 
-      mockedAxios.post.mockRejectedValue(mockError);
+      mockedAxios.post.mockRejectedValueOnce(mockError);
 
       await expect(forwardToWebhook(validCloudEvent)).rejects.toThrow();
     });
@@ -159,24 +153,22 @@ describe('Webhook Service', () => {
 
       await forwardToWebhook(validCloudEvent);
 
-      const callArgs = mockedAxios.post.mock.calls[0][2];
+      const callArgs = mockedAxios.post.mock.calls[0]?.[2];
       expect(callArgs?.headers).not.toHaveProperty('X-Correlation-ID');
     });
 
     it('should handle webhook returning 404 error', async () => {
-      const mockError = {
-        response: {
-          status: 404,
-          data: { error: 'Not Found' },
-          headers: {},
-          statusText: 'Not Found',
-        },
-        message: 'Request failed with status code 404',
+      const mockError = new Error('Request failed with status code 404');
+      (mockError as any).response = {
+        status: 404,
+        data: { error: 'Not Found' },
+        headers: {},
+        statusText: 'Not Found',
       };
 
-      mockedAxios.post.mockRejectedValue(mockError);
+      mockedAxios.post.mockRejectedValueOnce(mockError);
 
-      await expect(forwardToWebhook(validCloudEvent)).rejects.toThrow();
+      await expect(forwardToWebhook(validCloudEvent)).rejects.toThrow('Request failed with status code 404');
     });
 
     it('should preserve all CloudEvent properties in forwarded payload', async () => {
@@ -210,5 +202,117 @@ describe('Webhook Service', () => {
         expect.any(Object)
       );
     });
+  });
+
+  describe('forwardToWebhookWithRetry', () => {
+    const { forwardToWebhookWithRetry } = require('../services/webhook.service');
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      process.env.WEBHOOK_URL = 'https://webhook.site/test';
+      process.env.WEBHOOK_TIMEOUT = '10000';
+      process.env.WEBHOOK_RETRY_ATTEMPTS = '3';
+    });
+
+    it('should succeed on first attempt without retry', async () => {
+      const mockResponse = {
+        status: 200,
+        data: { success: true },
+        headers: { 'content-type': 'application/json' },
+        statusText: 'OK',
+      };
+
+      mockedAxios.post.mockResolvedValueOnce(mockResponse);
+
+      const result = await forwardToWebhookWithRetry(validCloudEvent);
+
+      expect(result).toEqual({
+        status: 200,
+        data: { success: true },
+        headers: { 'content-type': 'application/json' },
+      });
+      expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+    });
+
+    it('should retry on failure and eventually succeed', async () => {
+      const mockError = new Error('Network error');
+      const mockSuccess = {
+        status: 200,
+        data: { success: true },
+        headers: {},
+        statusText: 'OK',
+      };
+
+      // Fail first two attempts, succeed on third
+      mockedAxios.post
+        .mockRejectedValueOnce(mockError)
+        .mockRejectedValueOnce(mockError)
+        .mockResolvedValueOnce(mockSuccess);
+
+      const result = await forwardToWebhookWithRetry(validCloudEvent);
+
+      expect(result.status).toBe(200);
+      expect(mockedAxios.post).toHaveBeenCalledTimes(3);
+    });
+
+    it(
+      'should throw error after max retry attempts',
+      async () => {
+        const mockError = new Error('Persistent network error');
+
+        mockedAxios.post.mockRejectedValue(mockError);
+
+        await expect(forwardToWebhookWithRetry(validCloudEvent)).rejects.toThrow('Persistent network error');
+
+        // Should attempt: initial + 3 retries = 4 total attempts
+        expect(mockedAxios.post).toHaveBeenCalledTimes(4);
+      },
+      15000
+    ); // 15 second timeout for retry test
+
+    it('should include correlation ID in retry attempts', async () => {
+      const mockError = new Error('Network error');
+      const mockSuccess = {
+        status: 200,
+        data: { success: true },
+        headers: {},
+        statusText: 'OK',
+      };
+
+      mockedAxios.post.mockRejectedValueOnce(mockError).mockResolvedValueOnce(mockSuccess);
+
+      await forwardToWebhookWithRetry(validCloudEvent, 'test-correlation-456');
+
+      // Check that correlation ID was passed in all attempts
+      const calls = mockedAxios.post.mock.calls;
+      expect(calls.length).toBe(2);
+      calls.forEach((call) => {
+        const headers = call[2]?.headers;
+        expect(headers).toHaveProperty('X-Correlation-ID', 'test-correlation-456');
+      });
+    });
+
+    it(
+      'should wait with exponential backoff between retries',
+      async () => {
+        const mockError = new Error('Network error');
+        const startTime = Date.now();
+
+        mockedAxios.post.mockRejectedValue(mockError);
+
+        try {
+          await forwardToWebhookWithRetry(validCloudEvent);
+        } catch (error) {
+          // Expected to fail after retries
+        }
+
+        const duration = Date.now() - startTime;
+
+        // Should have delays: ~1s, ~2s, ~4s = ~7s minimum (with jitter up to +3s)
+        // We'll check for at least 6 seconds to account for timing variations
+        expect(duration).toBeGreaterThanOrEqual(6000);
+      },
+      15000
+    ); // 15 second timeout for backoff test
   });
 });

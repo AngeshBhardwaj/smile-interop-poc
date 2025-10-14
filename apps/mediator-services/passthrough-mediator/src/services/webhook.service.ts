@@ -59,7 +59,6 @@ export async function forwardToWebhook(
     const response: AxiosResponse = await axios.post(config.webhook.url, event, {
       headers,
       timeout: config.webhook.timeout,
-      validateStatus: (status) => status < 500, // Don't throw on 4xx errors
     });
 
     const duration = Date.now() - startTime;
