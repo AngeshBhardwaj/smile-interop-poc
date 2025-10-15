@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "patient-output.schema.json",
+  "title": "Patient Output Schema",
+  "description": "JSON Schema for transformed patient data in custom format",
+  "type": "object",
+  "required": ["patient", "metadata"],
+  "properties": {
+    "patient": {
+      "type": "object",
+      "required": ["id", "name", "birthDate"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Patient identifier"
+        },
+        "name": {
+          "type": "object",
+          "required": ["first", "last"],
+          "properties": {
+            "first": {
+              "type": "string",
+              "minLength": 1
+            },
+            "last": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "birthDate": {
+          "type": "string",
+          "description": "Patient date of birth (ISO 8601)"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female", "other", "unknown"]
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "phone": {
+              "type": "string",
+              "pattern": "^[+]?[0-9\\s\\-\\(\\)]+$"
+            }
+          }
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "street": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "postalCode": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "update": {
+      "type": "object",
+      "description": "Update information (for patient.updated events)",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["eventId", "eventType", "timestamp", "source"],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "description": "CloudEvent ID"
+        },
+        "eventType": {
+          "type": "string",
+          "description": "CloudEvent type"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "CloudEvent timestamp"
+        },
+        "source": {
+          "type": "string",
+          "description": "CloudEvent source"
+        }
+      }
+    }
+  }
+}

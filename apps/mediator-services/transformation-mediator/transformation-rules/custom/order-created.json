@@ -1,0 +1,112 @@
+{
+  "name": "order-created-to-custom",
+  "description": "Transform order.created CloudEvent to custom JSON format",
+  "eventType": "order.created",
+  "targetFormat": "custom-json",
+  "enabled": true,
+  "mappings": [
+    {
+      "source": "$.data.orderId",
+      "target": "$.order.id",
+      "required": true,
+      "description": "Order identifier"
+    },
+    {
+      "source": "$.data.orderType",
+      "target": "$.order.type",
+      "transform": "toUpperCase",
+      "required": true,
+      "description": "Order type (MEDICINE/EQUIPMENT/SUPPLY/VACCINE)"
+    },
+    {
+      "source": "$.data.status",
+      "target": "$.order.status",
+      "transform": "toUpperCase",
+      "required": true,
+      "description": "Order status"
+    },
+    {
+      "source": "$.data.priority",
+      "target": "$.order.priority",
+      "transform": "toLowerCase",
+      "required": false,
+      "defaultValue": "normal",
+      "description": "Order priority (urgent/high/normal/low)"
+    },
+    {
+      "source": "$.data.quantity",
+      "target": "$.order.quantity",
+      "transform": "toNumber",
+      "required": true,
+      "description": "Order quantity"
+    },
+    {
+      "source": "$.data.description",
+      "target": "$.order.description",
+      "required": false,
+      "description": "Order description"
+    },
+    {
+      "source": "$.data.requestedBy",
+      "target": "$.order.requestor.name",
+      "required": true,
+      "description": "Name of person requesting order"
+    },
+    {
+      "source": "$.data.department",
+      "target": "$.order.requestor.department",
+      "required": false,
+      "description": "Department requesting order"
+    },
+    {
+      "source": "$.data.deliveryAddress",
+      "target": "$.order.delivery.address",
+      "required": false,
+      "description": "Delivery address"
+    },
+    {
+      "source": "$.data.expectedDeliveryDate",
+      "target": "$.order.delivery.expectedDate",
+      "transform": "formatDate",
+      "required": false,
+      "description": "Expected delivery date"
+    },
+    {
+      "source": "$.data.notes",
+      "target": "$.order.notes",
+      "required": false,
+      "description": "Additional notes"
+    },
+    {
+      "source": "$.id",
+      "target": "$.metadata.eventId",
+      "required": true,
+      "description": "CloudEvent ID"
+    },
+    {
+      "source": "$.type",
+      "target": "$.metadata.eventType",
+      "required": true,
+      "description": "CloudEvent type"
+    },
+    {
+      "source": "$.time",
+      "target": "$.metadata.timestamp",
+      "required": true,
+      "description": "CloudEvent timestamp"
+    },
+    {
+      "source": "$.source",
+      "target": "$.metadata.source",
+      "required": true,
+      "description": "CloudEvent source"
+    }
+  ],
+  "outputSchema": "schemas/order-output.schema.json",
+  "metadata": {
+    "version": "1.0.0",
+    "author": "SMILE POC",
+    "created": "2025-10-15",
+    "tags": ["order", "logistics", "custom-json"]
+  }
+}

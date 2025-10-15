@@ -1,0 +1,116 @@
+{
+  "name": "patient-registered-to-custom",
+  "description": "Transform health.patient.registered CloudEvent to custom JSON format",
+  "eventType": "health.patient.registered",
+  "targetFormat": "custom-json",
+  "enabled": true,
+  "mappings": [
+    {
+      "source": "$.data.patientId",
+      "target": "$.patient.id",
+      "required": true,
+      "description": "Patient identifier"
+    },
+    {
+      "source": "$.data.firstName",
+      "target": "$.patient.name.first",
+      "transform": "trim",
+      "required": true,
+      "description": "Patient first name"
+    },
+    {
+      "source": "$.data.lastName",
+      "target": "$.patient.name.last",
+      "transform": "trim",
+      "required": true,
+      "description": "Patient last name"
+    },
+    {
+      "source": "$.data.dateOfBirth",
+      "target": "$.patient.birthDate",
+      "transform": "formatDate",
+      "required": true,
+      "description": "Patient date of birth (ISO 8601)"
+    },
+    {
+      "source": "$.data.gender",
+      "target": "$.patient.gender",
+      "transform": "toLowerCase",
+      "required": false,
+      "description": "Patient gender (male/female/other)"
+    },
+    {
+      "source": "$.data.email",
+      "target": "$.patient.contact.email",
+      "required": false,
+      "description": "Patient email address"
+    },
+    {
+      "source": "$.data.phone",
+      "target": "$.patient.contact.phone",
+      "required": false,
+      "description": "Patient phone number"
+    },
+    {
+      "source": "$.data.address.street",
+      "target": "$.patient.address.street",
+      "required": false,
+      "description": "Street address"
+    },
+    {
+      "source": "$.data.address.city",
+      "target": "$.patient.address.city",
+      "required": false,
+      "description": "City"
+    },
+    {
+      "source": "$.data.address.state",
+      "target": "$.patient.address.state",
+      "required": false,
+      "description": "State/Province"
+    },
+    {
+      "source": "$.data.address.zipCode",
+      "target": "$.patient.address.postalCode",
+      "required": false,
+      "description": "Postal code"
+    },
+    {
+      "source": "$.data.address.country",
+      "target": "$.patient.address.country",
+      "required": false,
+      "description": "Country"
+    },
+    {
+      "source": "$.id",
+      "target": "$.metadata.eventId",
+      "required": true,
+      "description": "CloudEvent ID"
+    },
+    {
+      "source": "$.type",
+      "target": "$.metadata.eventType",
+      "required": true,
+      "description": "CloudEvent type"
+    },
+    {
+      "source": "$.time",
+      "target": "$.metadata.timestamp",
+      "required": true,
+      "description": "CloudEvent timestamp"
+    },
+    {
+      "source": "$.source",
+      "target": "$.metadata.source",
+      "required": true,
+      "description": "CloudEvent source"
+    }
+  ],
+  "outputSchema": "schemas/patient-output.schema.json",
+  "metadata": {
+    "version": "1.0.0",
+    "author": "SMILE POC",
+    "created": "2025-10-15",
+    "tags": ["patient", "health", "custom-json"]
+  }
+}

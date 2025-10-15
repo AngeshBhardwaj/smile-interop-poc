@@ -345,6 +345,48 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  # Transformation Mediator - Transforms CloudEvents to custom JSON formats
+  transformation-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/transformation-mediator/Dockerfile
+    container_name: smile-transformation-mediator
+    ports:
+      - "3101:3101"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      MEDIATOR_PORT: 3101
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Transformation Configuration
+      RULES_DIRECTORY: ./transformation-rules
+      ENABLE_RULE_CACHING: "true"
+      CACHE_TTL_SECONDS: 300
+
+      # Default Destination
+      DEFAULT_DESTINATION: https://webhook.site/f90874cf-ddcd-4adc-be8d-5bfb3f1c6720
+      DEFAULT_TIMEOUT: 30000
+      DEFAULT_RETRY_ATTEMPTS: 3
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
 
 volumes:
   rabbitmq_data:

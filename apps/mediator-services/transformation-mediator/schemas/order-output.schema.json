@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "order-output.schema.json",
+  "title": "Order Output Schema",
+  "description": "JSON Schema for transformed order data in custom format",
+  "type": "object",
+  "required": ["order", "metadata"],
+  "properties": {
+    "order": {
+      "type": "object",
+      "required": ["id", "type", "status", "quantity", "requestor"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Order identifier"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["MEDICINE", "EQUIPMENT", "SUPPLY", "VACCINE"],
+          "description": "Order type"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "PACKED", "SHIPPED", "RECEIVED", "FULFILLED", "RETURNED", "RETURN_COMPLETE"],
+          "description": "Order status"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["urgent", "high", "normal", "low"],
+          "default": "normal"
+        },
+        "quantity": {
+          "type": "number",
+          "minimum": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "requestor": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "department": {
+              "type": "string"
+            }
+          }
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "expectedDate": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["eventId", "eventType", "timestamp", "source"],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "description": "CloudEvent ID"
+        },
+        "eventType": {
+          "type": "string",
+          "description": "CloudEvent type"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "CloudEvent timestamp"
+        },
+        "source": {
+          "type": "string",
+          "description": "CloudEvent source"
+        }
+      }
+    }
+  }
+}

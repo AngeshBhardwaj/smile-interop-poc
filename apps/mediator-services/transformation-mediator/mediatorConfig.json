@@ -1,0 +1,63 @@
+{
+  "urn": "urn:mediator:smile-transformation",
+  "version": "1.0.0",
+  "name": "SMILE Transformation Mediator",
+  "description": "Transforms CloudEvents to various formats (Custom JSON, HL7 v2, FHIR R4)",
+  "defaultChannelConfig": [
+    {
+      "name": "Health Transformation Channel",
+      "urlPattern": "^/transform$",
+      "routes": [
+        {
+          "name": "Transformation Route",
+          "host": "transformation-mediator",
+          "port": 3101,
+          "path": "/transform",
+          "primary": true,
+          "type": "http"
+        }
+      ],
+      "allow": ["smile-poc"],
+      "type": "http",
+      "methods": ["POST"],
+      "authType": "private"
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "Transform Endpoint",
+      "host": "transformation-mediator",
+      "port": 3101,
+      "path": "/transform",
+      "type": "http"
+    },
+    {
+      "name": "Health Check",
+      "host": "transformation-mediator",
+      "port": 3101,
+      "path": "/health",
+      "type": "http"
+    },
+    {
+      "name": "Rules List",
+      "host": "transformation-mediator",
+      "port": 3101,
+      "path": "/rules",
+      "type": "http"
+    }
+  ],
+  "configDefs": [
+    {
+      "param": "rulesDirectory",
+      "displayName": "Transformation Rules Directory",
+      "description": "Directory containing transformation rule JSON files",
+      "type": "string"
+    },
+    {
+      "param": "enableCaching",
+      "displayName": "Enable Rule Caching",
+      "description": "Cache transformation rules for better performance",
+      "type": "bool"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+*.log
+.env
+.env.local
+.env.test
+*.md
+__tests__
+*.test.ts
+*.spec.ts
+jest.config.js
+.eslintrc.js
+.prettierrc
