@@ -324,12 +324,12 @@ services:
 
       # OpenHIM Configuration
       OPENHIM_API_URL: https://openhim-core:8080
-      OPENHIM_USERNAME: smile-poc
+      OPENHIM_USERNAME: root@openhim.org
       OPENHIM_PASSWORD: password
       OPENHIM_TRUST_SELF_SIGNED: "true"
 
       # Webhook Configuration
-      WEBHOOK_URL: https://webhook.site/unique-id-here
+      WEBHOOK_URL: https://webhook.site/f90874cf-ddcd-4adc-be8d-5bfb3f1c6720
       WEBHOOK_TIMEOUT: 30000
       WEBHOOK_RETRY_ATTEMPTS: 3
     depends_on:
