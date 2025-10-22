@@ -290,7 +290,7 @@ services:
       OPENHIM_PASSWORD: password
       # Channel endpoints - Route to specific mediators based on event source
       OPENHIM_HEALTH_ENDPOINT: "https://openhim-core:5000/passthrough"
-      OPENHIM_ORDERS_ENDPOINT: "https://openhim-core:5000/transform/custom"
+      OPENHIM_ORDERS_ENDPOINT: "https://openhim-core:5000/transform"
       OPENHIM_DEFAULT_ENDPOINT: "https://openhim-core:5000/smile-default"
     depends_on:
       rabbitmq:
