@@ -406,9 +406,9 @@ services:
       OPENHIM_PASSWORD: password
       OPENHIM_TRUST_SELF_SIGNED: "true"
 
-      # Client Configuration
-      CLIENT_ENDPOINT: http://mock-client-warehouse:3203/orders
-      CLIENT_NAME: Warehouse Fulfillment Client
+      # Client Configuration - Webhook endpoint for warehouse orders
+      CLIENT_ENDPOINT: https://webhook.site/d9ec65ae-e88c-4eb0-a3d5-76e6f27a8f93
+      CLIENT_NAME: Warehouse Fulfillment Webhook
       CLIENT_TIMEOUT: 30000
     depends_on:
       openhim-core:
