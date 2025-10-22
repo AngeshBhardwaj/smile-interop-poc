@@ -386,6 +386,45 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  # Warehouse Transformation Mediator - Transforms CloudEvents to Warehouse Summary format
+  warehouse-transformation-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/warehouse-transformation-mediator/Dockerfile
+    container_name: smile-warehouse-transformation-mediator
+    ports:
+      - "3301:3301"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      PORT: 3301
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Client Configuration
+      CLIENT_ENDPOINT: http://mock-client-warehouse:3203/orders
+      CLIENT_NAME: Warehouse Fulfillment Client
+      CLIENT_TIMEOUT: 30000
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+      mock-client-warehouse:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3301/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
   # Custom Transformation Mediator - Transforms CloudEvents to Custom JSON for Warehouse
   custom-transformation-mediator:
     build:
