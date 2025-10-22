@@ -1,0 +1,262 @@
+{
+  "name": "order-to-warehouse-json",
+  "version": "1.0",
+  "description": "Transform order CloudEvent to custom warehouse JSON format for inventory/fulfillment systems",
+  "eventType": "order.*",
+  "enabled": true,
+  "sourceFormat": "cloudevents+json",
+  "targetFormat": "custom-json",
+  "mappings": [
+    {
+      "target": "shipmentId",
+      "source": "$.data.orderId",
+      "transforms": ["trim", "toUpperCase"]
+    },
+    {
+      "target": "externalOrderRef",
+      "source": "$.id",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "orderType",
+      "source": "$.data.orderType",
+      "transforms": ["trim", "toUpperCase"]
+    },
+    {
+      "target": "fulfillmentStatus",
+      "source": "$.data.status",
+      "transforms": ["mapOrderStatusToWarehouse"]
+    },
+    {
+      "target": "priority",
+      "source": "$.data.priority",
+      "transforms": ["mapPriorityToWarehouse"]
+    },
+    {
+      "target": "requestedDate",
+      "source": "$.data.orderDate",
+      "transforms": ["formatDateISO8601"]
+    },
+    {
+      "target": "requiredDeliveryDate",
+      "source": "$.data.requestedDeliveryDate",
+      "transforms": ["formatDateISO8601"]
+    },
+    {
+      "target": "destination.facilityCode",
+      "source": "$.data.facilityId",
+      "transforms": ["trim", "toUpperCase"]
+    },
+    {
+      "target": "destination.facilityName",
+      "source": "$.data.facilityId",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "destination.deliveryAddress",
+      "source": "$.data.deliveryAddress",
+      "transforms": ["trim"],
+      "defaultValue": "To be determined"
+    },
+    {
+      "target": "destination.contactPerson",
+      "source": "$.data.createdBy",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "destination.contactPhone",
+      "source": "$.data.contactPhone",
+      "transforms": ["trim"],
+      "defaultValue": ""
+    },
+    {
+      "target": "destination.specialInstructions",
+      "source": "$.data.notes",
+      "transforms": ["trim"],
+      "defaultValue": ""
+    },
+    {
+      "target": "orderMetadata.createdBy",
+      "source": "$.data.createdBy",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "orderMetadata.createdAt",
+      "source": "$.data.orderDate",
+      "transforms": ["formatDateISO8601"]
+    },
+    {
+      "target": "orderMetadata.lastUpdated",
+      "source": "$.time",
+      "transforms": ["formatDateISO8601"]
+    },
+    {
+      "target": "orderMetadata.sourceSystem",
+      "source": "$.source",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "orderMetadata.eventId",
+      "source": "$.id",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "orderMetadata.eventType",
+      "source": "$.type",
+      "transforms": ["trim"]
+    }
+  ],
+  "itemMappings": {
+    "sourceArray": "$.data.items",
+    "targetArray": "lineItems",
+    "itemMappings": [
+      {
+        "target": "lineNumber",
+        "source": "index",
+        "transforms": ["incrementIndex"]
+      },
+      {
+        "target": "sku",
+        "source": "$.itemId",
+        "transforms": ["trim", "toUpperCase"]
+      },
+      {
+        "target": "itemDescription",
+        "source": "$.name",
+        "transforms": ["trim"]
+      },
+      {
+        "target": "quantityOrdered",
+        "source": "$.quantityOrdered",
+        "transforms": ["toNumber"]
+      },
+      {
+        "target": "unitOfMeasure",
+        "source": "$.unit",
+        "transforms": ["trim", "toUpperCase"],
+        "defaultValue": "EA"
+      },
+      {
+        "target": "unitPrice",
+        "source": "$.unitPrice",
+        "transforms": ["toNumber"],
+        "defaultValue": 0
+      },
+      {
+        "target": "totalPrice",
+        "source": "calculated",
+        "formula": "$.quantityOrdered * $.unitPrice",
+        "transforms": ["toNumber", "roundToTwoDecimals"]
+      },
+      {
+        "target": "weight",
+        "source": "$.weight",
+        "transforms": ["toNumber"],
+        "defaultValue": 0
+      },
+      {
+        "target": "weightUnit",
+        "source": "$.weightUnit",
+        "transforms": ["trim", "toUpperCase"],
+        "defaultValue": "KG"
+      },
+      {
+        "target": "packagingType",
+        "source": "$.packagingType",
+        "transforms": ["trim"],
+        "defaultValue": "BOX"
+      },
+      {
+        "target": "storageRequirements",
+        "source": "$.storageRequirements",
+        "transforms": ["trim"],
+        "defaultValue": "AMBIENT"
+      },
+      {
+        "target": "warehouseLocation",
+        "source": "$.warehouseLocation",
+        "transforms": ["trim"],
+        "defaultValue": "TBD"
+      },
+      {
+        "target": "batchNumber",
+        "source": "$.batchNumber",
+        "transforms": ["trim"],
+        "defaultValue": ""
+      },
+      {
+        "target": "expiryDate",
+        "source": "$.expiryDate",
+        "transforms": ["formatDateISO8601"],
+        "defaultValue": null
+      },
+      {
+        "target": "fulfillmentStatus",
+        "source": "constant",
+        "value": "PENDING"
+      }
+    ]
+  },
+  "calculatedFields": [
+    {
+      "target": "summary.totalItems",
+      "source": "calculated",
+      "formula": "count($.data.items)"
+    },
+    {
+      "target": "summary.totalQuantity",
+      "source": "calculated",
+      "formula": "sum($.data.items[*].quantityOrdered)"
+    },
+    {
+      "target": "summary.totalValue",
+      "source": "calculated",
+      "formula": "sum(lineItems[*].totalPrice)",
+      "transforms": ["roundToTwoDecimals"]
+    },
+    {
+      "target": "summary.totalWeight",
+      "source": "calculated",
+      "formula": "sum(lineItems[*].weight)",
+      "transforms": ["roundToTwoDecimals"]
+    },
+    {
+      "target": "summary.estimatedPackages",
+      "source": "calculated",
+      "formula": "ceiling($.summary.totalWeight / 25)",
+      "description": "Estimated packages assuming 25kg per package"
+    }
+  ],
+  "outputValidation": {
+    "enabled": true,
+    "schemaPath": "../schemas/warehouse-order.schema.json"
+  },
+  "transformFunctions": {
+    "mapOrderStatusToWarehouse": {
+      "DRAFT": "PENDING",
+      "SUBMITTED": "CONFIRMED",
+      "APPROVED": "CONFIRMED",
+      "PACKED": "PACKED",
+      "SHIPPED": "SHIPPED",
+      "RECEIVED": "DELIVERED",
+      "FULFILLED": "COMPLETED",
+      "REJECTED": "CANCELLED",
+      "CANCELLED": "CANCELLED",
+      "RETURNED": "RETURNED"
+    },
+    "mapPriorityToWarehouse": {
+      "low": 3,
+      "normal": 2,
+      "high": 1,
+      "urgent": 0,
+      "stat": 0
+    }
+  },
+  "metadata": {
+    "createdBy": "SMILE POC",
+    "createdDate": "2025-10-15",
+    "targetSystem": "Warehouse Management System",
+    "version": "1.0",
+    "notes": "Custom JSON format optimized for warehouse fulfillment operations with inventory tracking"
+  }
+}

@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - 'apps/mediator-services/*'
+  - 'apps/webhook-services/*'
   - 'packages/*'
   - 'test-utils'
 

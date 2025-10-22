@@ -277,7 +277,7 @@ export type OrderEventData =
 export interface OrderCloudEvent {
   specversion: '1.0';
   type: OrderEventType;
-  source: 'smile.orders-service';
+  source: 'urn:smile:orders-service';
   id: string;
   time: string;
   datacontenttype: 'application/json';

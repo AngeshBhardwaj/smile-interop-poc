@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-10-15T17:40:00Z",
+  "clients": [
+    {
+      "id": "hospital-a-fhir",
+      "name": "General Hospital - FHIR R4",
+      "description": "Primary hospital using FHIR R4 for order management integration",
+      "enabled": true,
+      "endpoint": "http://mock-client-fhir:3201/orders",
+      "authType": "none",
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelay": 1000,
+      "transformationRules": ["order-to-fhir-r4"],
+      "eventTypes": [
+        "order.created",
+        "order.approved",
+        "order.shipped",
+        "order.fulfilled"
+      ],
+      "metadata": {
+        "facilityId": "HOSP-A-001",
+        "integrationType": "FHIR",
+        "version": "R4",
+        "contactEmail": "integration@hospital-a.example.com"
+      }
+    },
+    {
+      "id": "pharmacy-b-hl7",
+      "name": "City Pharmacy - HL7 v2",
+      "description": "Pharmacy system using HL7 v2 ORM messages for medication orders",
+      "enabled": true,
+      "endpoint": "http://mock-client-hl7:3202/orders",
+      "authType": "none",
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelay": 1000,
+      "transformationRules": ["order-to-hl7-orm"],
+      "eventTypes": [
+        "order.created",
+        "order.approved"
+      ],
+      "metadata": {
+        "facilityId": "PHARM-B-001",
+        "integrationType": "HL7",
+        "version": "2.5.1",
+        "messageType": "ORM^O01",
+        "contactEmail": "integration@pharmacy-b.example.com"
+      }
+    },
+    {
+      "id": "warehouse-c-custom",
+      "name": "Central Warehouse - Custom JSON",
+      "description": "Warehouse management system using custom JSON format",
+      "enabled": true,
+      "endpoint": "http://mock-client-warehouse:3203/orders",
+      "authType": "none",
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelay": 1000,
+      "transformationRules": ["order-to-warehouse-json"],
+      "eventTypes": [
+        "order.created",
+        "order.approved",
+        "order.packed",
+        "order.shipped"
+      ],
+      "metadata": {
+        "facilityId": "WAREHOUSE-C-001",
+        "integrationType": "REST",
+        "version": "1.0",
+        "contactEmail": "integration@warehouse-c.example.com"
+      }
+    }
+  ],
+  "globalSettings": {
+    "enableCircuitBreaker": true,
+    "circuitBreakerThreshold": 5,
+    "circuitBreakerTimeout": 60000,
+    "enableMetrics": true,
+    "enableAuditLogging": true,
+    "logLevel": "info",
+    "defaultTimeout": 30000,
+    "defaultRetryAttempts": 3,
+    "defaultRetryDelay": 1000
+  }
+}

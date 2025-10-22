@@ -19,8 +19,8 @@ import { logger } from '@smile/common';
  * Constants
  */
 const EVENT_SOURCES = {
-  HEALTH_SERVICE: 'smile.health-service',
-  ORDERS_SERVICE: 'smile.orders-service',
+  HEALTH_SERVICE: 'urn:smile:health-service',
+  ORDERS_SERVICE: 'urn:smile:orders-service',
 } as const;
 
 const CONTENT_TYPE = 'application/cloudevents+json';

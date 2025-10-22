@@ -1,0 +1,193 @@
+{
+  "name": "order-to-fhir-r4",
+  "version": "1.0",
+  "description": "Transform order CloudEvent to FHIR R4 ServiceRequest format for hospital systems",
+  "eventType": "order.*",
+  "enabled": true,
+  "sourceFormat": "cloudevents+json",
+  "targetFormat": "fhir-r4",
+  "mappings": [
+    {
+      "target": "resourceType",
+      "source": "constant",
+      "value": "ServiceRequest"
+    },
+    {
+      "target": "id",
+      "source": "$.data.orderId",
+      "transforms": ["trim", "toLowerCase"]
+    },
+    {
+      "target": "identifier[0].system",
+      "source": "constant",
+      "value": "http://smile-poc.org/order-id"
+    },
+    {
+      "target": "identifier[0].value",
+      "source": "$.data.orderId",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "status",
+      "source": "$.data.status",
+      "transforms": ["mapOrderStatusToFHIR"]
+    },
+    {
+      "target": "intent",
+      "source": "constant",
+      "value": "order"
+    },
+    {
+      "target": "priority",
+      "source": "$.data.priority",
+      "transforms": ["mapPriorityToFHIR"]
+    },
+    {
+      "target": "code.coding[0].system",
+      "source": "constant",
+      "value": "http://smile-poc.org/order-type"
+    },
+    {
+      "target": "code.coding[0].code",
+      "source": "$.data.orderType",
+      "transforms": ["trim", "toLowerCase"]
+    },
+    {
+      "target": "code.coding[0].display",
+      "source": "$.data.orderType",
+      "transforms": ["trim", "toTitleCase"]
+    },
+    {
+      "target": "code.text",
+      "source": "$.data.orderType",
+      "transforms": ["trim", "toTitleCase"]
+    },
+    {
+      "target": "subject.reference",
+      "source": "$.data.facilityId",
+      "transforms": ["addPrefix:Organization/"]
+    },
+    {
+      "target": "subject.display",
+      "source": "$.data.facilityId"
+    },
+    {
+      "target": "authoredOn",
+      "source": "$.data.orderDate",
+      "transforms": ["formatDateISO8601"]
+    },
+    {
+      "target": "requester.reference",
+      "source": "$.data.createdBy",
+      "transforms": ["addPrefix:Practitioner/"]
+    },
+    {
+      "target": "requester.display",
+      "source": "$.data.createdBy"
+    },
+    {
+      "target": "note[0].text",
+      "source": "$.data.notes",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "meta.source",
+      "source": "$.source",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "meta.versionId",
+      "source": "$.id",
+      "transforms": ["trim"]
+    },
+    {
+      "target": "meta.lastUpdated",
+      "source": "$.time",
+      "transforms": ["formatDateISO8601"]
+    }
+  ],
+  "itemMappings": {
+    "sourceArray": "$.data.items",
+    "targetArray": "contained",
+    "itemMappings": [
+      {
+        "target": "resourceType",
+        "source": "constant",
+        "value": "SupplyRequest"
+      },
+      {
+        "target": "id",
+        "source": "$.itemId",
+        "transforms": ["trim", "toLowerCase", "addPrefix:item-"]
+      },
+      {
+        "target": "status",
+        "source": "constant",
+        "value": "active"
+      },
+      {
+        "target": "category",
+        "source": "constant",
+        "value": "non-stock"
+      },
+      {
+        "target": "priority",
+        "source": "constant",
+        "value": "routine"
+      },
+      {
+        "target": "itemCodeableConcept.text",
+        "source": "$.name",
+        "transforms": ["trim"]
+      },
+      {
+        "target": "quantity.value",
+        "source": "$.quantityOrdered",
+        "transforms": ["toNumber"]
+      },
+      {
+        "target": "quantity.unit",
+        "source": "$.unit",
+        "transforms": ["trim"],
+        "defaultValue": "unit"
+      },
+      {
+        "target": "occurrenceDateTime",
+        "source": "$.requestedDeliveryDate",
+        "transforms": ["formatDateISO8601"]
+      }
+    ]
+  },
+  "outputValidation": {
+    "enabled": true,
+    "schemaPath": "../schemas/fhir-r4-servicerequest.schema.json"
+  },
+  "transformFunctions": {
+    "mapOrderStatusToFHIR": {
+      "DRAFT": "draft",
+      "SUBMITTED": "active",
+      "APPROVED": "active",
+      "PACKED": "active",
+      "SHIPPED": "active",
+      "RECEIVED": "completed",
+      "FULFILLED": "completed",
+      "REJECTED": "revoked",
+      "CANCELLED": "revoked",
+      "RETURNED": "entered-in-error"
+    },
+    "mapPriorityToFHIR": {
+      "low": "routine",
+      "normal": "routine",
+      "high": "urgent",
+      "urgent": "urgent",
+      "stat": "stat"
+    }
+  },
+  "metadata": {
+    "createdBy": "SMILE POC",
+    "createdDate": "2025-10-15",
+    "fhirVersion": "R4",
+    "targetSystem": "Hospital System",
+    "notes": "Maps supply/equipment orders to FHIR R4 ServiceRequest with contained SupplyRequest resources"
+  }
+}

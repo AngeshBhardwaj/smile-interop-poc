@@ -22,6 +22,7 @@ import {
   OrderReceivedEventData,
   OrderReturnedEventData,
   OrderFulfilledEventData,
+  ORDER_EVENT_ROUTING,
 } from '../types/order-events';
 import { Order, RejectOrderRequest, InitiateReturnRequest } from '../types/order-types';
 import { OrderStatus } from '../types/order-status';
@@ -451,7 +452,7 @@ export class OrderEventService {
       const cloudEvent: OrderCloudEvent = {
         specversion: '1.0',
         type: eventType,
-        source: 'smile.orders-service',
+        source: 'urn:smile:orders-service',
         id: eventId,
         time: new Date().toISOString(),
         datacontenttype: 'application/json',
@@ -462,13 +463,18 @@ export class OrderEventService {
         },
       };
 
-      await this.eventEmitter.emit(cloudEvent as any);
+      // Get the routing key from ORDER_EVENT_ROUTING configuration
+      const routingConfig = ORDER_EVENT_ROUTING[eventType];
+      const routingKey = routingConfig?.routingKey;
+
+      await this.eventEmitter.emit(cloudEvent as any, routingKey);
 
       logger.info('Order event emitted successfully', {
         eventType,
         orderId: resourceId,
         correlationId: eventId,
         userId,
+        routingKey,
       });
 
     } catch (error: any) {

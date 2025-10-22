@@ -5,6 +5,8 @@
 import { CloudEvent } from '../config/types';
 import { matchRule } from '../rules/rule-engine';
 import { transformToCustomJSON, validateCloudEvent } from './custom-transformer';
+import { transformToFHIR } from './fhir-transformer';
+import { transformToHL7 } from './hl7-transformer';
 import { getValidator } from '../validators/json-schema.validator';
 import { getLogger } from '../utils/logger';
 import * as path from 'path';
@@ -123,34 +125,12 @@ export async function transform(
         break;
 
       case 'hl7-v2':
-        // TODO: Implement HL7 v2 transformation
-        return {
-          success: false,
-          errors: ['HL7 v2 transformation not yet implemented'],
-          metadata: {
-            eventId: cloudEvent.id,
-            eventType: cloudEvent.type,
-            ruleName: rule.name,
-            targetFormat: rule.targetFormat,
-            transformedAt: new Date().toISOString(),
-            validationPerformed: false,
-          },
-        };
+        transformResult = await transformToHL7(cloudEvent, rule);
+        break;
 
       case 'fhir-r4':
-        // TODO: Implement FHIR R4 transformation
-        return {
-          success: false,
-          errors: ['FHIR R4 transformation not yet implemented'],
-          metadata: {
-            eventId: cloudEvent.id,
-            eventType: cloudEvent.type,
-            ruleName: rule.name,
-            targetFormat: rule.targetFormat,
-            transformedAt: new Date().toISOString(),
-            validationPerformed: false,
-          },
-        };
+        transformResult = await transformToFHIR(cloudEvent, rule);
+        break;
 
       default:
         return {

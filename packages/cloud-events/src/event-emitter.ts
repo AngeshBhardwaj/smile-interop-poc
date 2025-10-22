@@ -34,7 +34,7 @@ export class EventEmitter {
     }
   }
 
-  async emit(event: CloudEventV1<unknown>): Promise<void> {
+  async emit(event: CloudEventV1<unknown>, routingKeyOverride?: string): Promise<void> {
     if (!this.channel) {
       throw new Error('EventEmitter not connected');
     }
@@ -43,9 +43,11 @@ export class EventEmitter {
       const cloudEvent = new CloudEvent(event);
       const message = Buffer.from(JSON.stringify(cloudEvent.toJSON()));
 
+      const routingKey = routingKeyOverride ?? this.config.routingKey ?? event.type;
+
       const published = this.channel.publish(
         this.config.exchange,
-        this.config.routingKey ?? event.type,
+        routingKey,
         message,
         {
           persistent: true,
@@ -67,6 +69,7 @@ export class EventEmitter {
         type: event.type,
         id: event.id,
         source: event.source,
+        routingKey,
       });
     } catch (error) {
       logger.error('Failed to emit event', { error, event });

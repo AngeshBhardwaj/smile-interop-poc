@@ -1,0 +1,62 @@
+{
+  "urn": "urn:mediator:smile-custom-transformation",
+  "version": "1.0.0",
+  "name": "SMILE Custom Transformation Mediator",
+  "description": "Transforms CloudEvents to Custom JSON format for Warehouse client",
+  "defaultChannelConfig": [
+    {
+      "name": "Custom Transformation Channel",
+      "urlPattern": "^/transform/custom$",
+      "routes": [
+        {
+          "name": "Custom JSON Route",
+          "host": "custom-transformation-mediator",
+          "port": 3303,
+          "path": "/transform",
+          "primary": true,
+          "type": "http"
+        }
+      ],
+      "allow": ["smile-poc"],
+      "type": "http",
+      "methods": ["POST"],
+      "authType": "private"
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "Transform Endpoint",
+      "host": "custom-transformation-mediator",
+      "port": 3303,
+      "path": "/transform",
+      "type": "http"
+    },
+    {
+      "name": "Health Check",
+      "host": "custom-transformation-mediator",
+      "port": 3303,
+      "path": "/health",
+      "type": "http"
+    }
+  ],
+  "configDefs": [
+    {
+      "param": "clientEndpoint",
+      "displayName": "Warehouse Client Endpoint",
+      "description": "Target endpoint URL for warehouse client",
+      "type": "string"
+    },
+    {
+      "param": "clientTimeout",
+      "displayName": "Client Timeout (ms)",
+      "description": "HTTP timeout for client requests in milliseconds",
+      "type": "number"
+    },
+    {
+      "param": "retryAttempts",
+      "displayName": "Retry Attempts",
+      "description": "Number of retry attempts for failed requests",
+      "type": "number"
+    }
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "name": "order-to-hl7-orm",
+  "version": "1.0",
+  "description": "Transform order CloudEvent to HL7 v2.5.1 ORM^O01 message for pharmacy systems",
+  "eventType": "order.*",
+  "enabled": true,
+  "sourceFormat": "cloudevents+json",
+  "targetFormat": "hl7-v2",
+  "outputType": "hl7-delimited",
+  "mappings": [
+    {
+      "source": "$.id",
+      "target": "messageControlId",
+      "description": "Message Control ID from CloudEvent ID"
+    }
+  ],
+  "segments": [
+    {
+      "segment": "MSH",
+      "fields": [
+        {
+          "field": "MSH-1",
+          "value": "|",
+          "description": "Field Separator"
+        },
+        {
+          "field": "MSH-2",
+          "value": "^~\\&",
+          "description": "Encoding Characters"
+        },
+        {
+          "field": "MSH-3",
+          "source": "constant",
+          "value": "SMILE-POC",
+          "description": "Sending Application"
+        },
+        {
+          "field": "MSH-4",
+          "source": "$.data.facilityId",
+          "transforms": ["trim", "toUpperCase"],
+          "description": "Sending Facility"
+        },
+        {
+          "field": "MSH-5",
+          "source": "constant",
+          "value": "PHARMACY-SYSTEM",
+          "description": "Receiving Application"
+        },
+        {
+          "field": "MSH-6",
+          "source": "constant",
+          "value": "PHARMACY-B",
+          "description": "Receiving Facility"
+        },
+        {
+          "field": "MSH-7",
+          "source": "$.time",
+          "transforms": ["formatDateHL7"],
+          "description": "Message DateTime"
+        },
+        {
+          "field": "MSH-9",
+          "value": "ORM^O01^ORM_O01",
+          "description": "Message Type"
+        },
+        {
+          "field": "MSH-10",
+          "source": "$.id",
+          "transforms": ["trim"],
+          "description": "Message Control ID"
+        },
+        {
+          "field": "MSH-11",
+          "value": "P",
+          "description": "Processing ID (P=Production, T=Test)"
+        },
+        {
+          "field": "MSH-12",
+          "value": "2.5.1",
+          "description": "Version ID"
+        }
+      ]
+    },
+    {
+      "segment": "PID",
+      "fields": [
+        {
+          "field": "PID-1",
+          "value": "1",
+          "description": "Set ID"
+        },
+        {
+          "field": "PID-3",
+          "source": "$.data.facilityId",
+          "transforms": ["trim"],
+          "description": "Patient Identifier (using facility)"
+        },
+        {
+          "field": "PID-5",
+          "source": "$.data.facilityId",
+          "transforms": ["trim", "toUpperCase"],
+          "description": "Patient Name (facility name)"
+        },
+        {
+          "field": "PID-18",
+          "source": "$.data.facilityId",
+          "description": "Patient Account Number"
+        }
+      ]
+    },
+    {
+      "segment": "ORC",
+      "fields": [
+        {
+          "field": "ORC-1",
+          "source": "$.data.status",
+          "transforms": ["mapOrderStatusToHL7"],
+          "description": "Order Control"
+        },
+        {
+          "field": "ORC-2",
+          "source": "$.data.orderId",
+          "transforms": ["trim"],
+          "description": "Placer Order Number"
+        },
+        {
+          "field": "ORC-3",
+          "source": "$.data.orderId",
+          "transforms": ["trim", "addPrefix:FILL-"],
+          "description": "Filler Order Number"
+        },
+        {
+          "field": "ORC-5",
+          "source": "$.data.status",
+          "transforms": ["mapOrderStatusToHL7Status"],
+          "description": "Order Status"
+        },
+        {
+          "field": "ORC-9",
+          "source": "$.data.orderDate",
+          "transforms": ["formatDateHL7"],
+          "description": "Date/Time of Transaction"
+        },
+        {
+          "field": "ORC-12",
+          "source": "$.data.createdBy",
+          "transforms": ["formatHL7Provider"],
+          "description": "Ordering Provider"
+        },
+        {
+          "field": "ORC-15",
+          "source": "$.data.orderDate",
+          "transforms": ["formatDateHL7"],
+          "description": "Order Effective Date/Time"
+        },
+        {
+          "field": "ORC-21",
+          "source": "$.data.facilityId",
+          "description": "Ordering Facility Name"
+        }
+      ]
+    },
+    {
+      "segment": "RXO",
+      "condition": "$.data.orderType == 'medicines'",
+      "fields": [
+        {
+          "field": "RXO-1",
+          "source": "$.data.items[0].itemId",
+          "transforms": ["trim"],
+          "description": "Requested Give Code"
+        },
+        {
+          "field": "RXO-2",
+          "source": "$.data.items[0].quantityOrdered",
+          "transforms": ["toNumber"],
+          "description": "Requested Give Amount - Minimum"
+        },
+        {
+          "field": "RXO-4",
+          "source": "$.data.items[0].unit",
+          "defaultValue": "unit",
+          "description": "Requested Give Units"
+        },
+        {
+          "field": "RXO-9",
+          "value": "TRUE",
+          "description": "Allow Substitutions"
+        },
+        {
+          "field": "RXO-21",
+          "source": "$.data.items[0].quantityOrdered",
+          "transforms": ["toNumber"],
+          "description": "Requested Dispense Amount"
+        },
+        {
+          "field": "RXO-22",
+          "source": "$.data.items[0].unit",
+          "defaultValue": "unit",
+          "description": "Requested Dispense Units"
+        }
+      ]
+    },
+    {
+      "segment": "OBX",
+      "repeatable": true,
+      "itemSource": "$.data.items",
+      "fields": [
+        {
+          "field": "OBX-1",
+          "source": "index",
+          "transforms": ["incrementIndex"],
+          "description": "Set ID"
+        },
+        {
+          "field": "OBX-2",
+          "value": "CE",
+          "description": "Value Type (Coded Entry)"
+        },
+        {
+          "field": "OBX-3",
+          "source": "$.itemId",
+          "transforms": ["trim"],
+          "description": "Observation Identifier"
+        },
+        {
+          "field": "OBX-5",
+          "source": "$.name",
+          "transforms": ["trim"],
+          "description": "Observation Value"
+        },
+        {
+          "field": "OBX-6",
+          "source": "$.unit",
+          "defaultValue": "unit",
+          "description": "Units"
+        },
+        {
+          "field": "OBX-11",
+          "value": "F",
+          "description": "Observation Result Status (F=Final)"
+        }
+      ]
+    },
+    {
+      "segment": "NTE",
+      "condition": "$.data.notes",
+      "fields": [
+        {
+          "field": "NTE-1",
+          "value": "1",
+          "description": "Set ID"
+        },
+        {
+          "field": "NTE-2",
+          "value": "L",
+          "description": "Source of Comment (L=Ancillary)"
+        },
+        {
+          "field": "NTE-3",
+          "source": "$.data.notes",
+          "transforms": ["trim", "escapeHL7"],
+          "description": "Comment"
+        }
+      ]
+    }
+  ],
+  "outputValidation": {
+    "enabled": true,
+    "schemaPath": "../schemas/hl7-v2-orm.schema.json"
+  },
+  "transformFunctions": {
+    "mapOrderStatusToHL7": {
+      "DRAFT": "NW",
+      "SUBMITTED": "NW",
+      "APPROVED": "OK",
+      "PACKED": "IP",
+      "SHIPPED": "IP",
+      "RECEIVED": "CM",
+      "FULFILLED": "CM",
+      "REJECTED": "CA",
+      "CANCELLED": "CA"
+    },
+    "mapOrderStatusToHL7Status": {
+      "DRAFT": "SC",
+      "SUBMITTED": "IP",
+      "APPROVED": "IP",
+      "PACKED": "IP",
+      "SHIPPED": "IP",
+      "RECEIVED": "CM",
+      "FULFILLED": "CM",
+      "REJECTED": "CA",
+      "CANCELLED": "CA"
+    }
+  },
+  "metadata": {
+    "createdBy": "SMILE POC",
+    "createdDate": "2025-10-15",
+    "hl7Version": "2.5.1",
+    "messageType": "ORM^O01",
+    "targetSystem": "Pharmacy System",
+    "segmentDelimiter": "\\r",
+    "fieldDelimiter": "|",
+    "componentDelimiter": "^",
+    "repetitionDelimiter": "~",
+    "escapeCharacter": "\\",
+    "subcomponentDelimiter": "&",
+    "notes": "Generates HL7 v2.5.1 ORM^O01 message with ORC, RXO, and OBX segments for pharmacy orders"
+  }
+}

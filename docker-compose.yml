@@ -288,10 +288,9 @@ services:
       OPENHIM_API_URL: https://openhim-core:8080
       OPENHIM_USERNAME: smile-poc
       OPENHIM_PASSWORD: password
-      # Channel endpoints - Currently all events route to /smile-default
-      # TODO: Future enhancement - route to specific channels based on event type
-      OPENHIM_HEALTH_ENDPOINT: "https://openhim-core:5000/smile-default"
-      OPENHIM_ORDERS_ENDPOINT: "https://openhim-core:5000/smile-default"
+      # Channel endpoints - Route to specific mediators based on event source
+      OPENHIM_HEALTH_ENDPOINT: "https://openhim-core:5000/passthrough"
+      OPENHIM_ORDERS_ENDPOINT: "https://openhim-core:5000/transform/custom"
       OPENHIM_DEFAULT_ENDPOINT: "https://openhim-core:5000/smile-default"
     depends_on:
       rabbitmq:
@@ -385,6 +384,114 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
+
+  # Custom Transformation Mediator - Transforms CloudEvents to Custom JSON for Warehouse
+  custom-transformation-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/custom-transformation-mediator/Dockerfile
+    container_name: smile-custom-transformation-mediator
+    ports:
+      - "3303:3303"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      PORT: 3303
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Client Configuration
+      CLIENT_ENDPOINT: http://mock-client-warehouse:3203/orders
+      CLIENT_NAME: Warehouse Custom Client
+      CLIENT_TIMEOUT: 30000
+      CLIENT_RETRY_ATTEMPTS: 3
+      CLIENT_RETRY_DELAY: 1000
+
+      # Transformation Configuration
+      RULES_PATH: ./src/transformation-rules
+      DEFAULT_RULE: order-to-warehouse-json
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+      mock-client-warehouse:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3303/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Mock FHIR R4 Client - Simulates hospital system
+  mock-client-fhir:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-fhir/Dockerfile
+    container_name: smile-mock-client-fhir
+    ports:
+      - "3201:3201"
+    environment:
+      NODE_ENV: development
+      PORT: 3201
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3201/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Mock HL7 v2 Client - Simulates pharmacy system
+  mock-client-hl7:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-hl7/Dockerfile
+    container_name: smile-mock-client-hl7
+    ports:
+      - "3202:3202"
+    environment:
+      NODE_ENV: development
+      PORT: 3202
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3202/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Mock Warehouse Client - Simulates warehouse management system
+  mock-client-warehouse:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-warehouse/Dockerfile
+    container_name: smile-mock-client-warehouse
+    ports:
+      - "3203:3203"
+    environment:
+      NODE_ENV: development
+      PORT: 3203
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3203/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
 

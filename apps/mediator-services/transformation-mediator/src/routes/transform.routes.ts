@@ -4,14 +4,19 @@
 
 import { Router, Request, Response } from 'express';
 import { transform } from '../services/transformer.service';
+import { MultiClientTransformer } from '../services/multi-client-transformer';
 import { validateCloudEvent } from '../validators/cloudevents.validator';
 import { forwardData, ForwardOptions } from '../utils/forwarder';
 import { getLogger } from '../utils/logger';
 import { config } from '../config';
 import { v4 as uuidv4 } from 'uuid';
+import { getClientLoader } from '../clients/client-loader';
 
 const router: Router = Router();
 const logger = getLogger('transform-routes');
+
+// Initialize multi-client transformer
+let multiClientTransformer: MultiClientTransformer | null = null;
 
 /**
  * OpenHIM mediator response builder
@@ -38,10 +43,178 @@ function buildMediatorResponse(
 }
 
 /**
+ * Initialize multi-client transformer (lazy initialization)
+ */
+async function getMultiClientTransformer(): Promise<MultiClientTransformer> {
+  if (!multiClientTransformer) {
+    const clientLoader = getClientLoader();
+    await clientLoader.loadConfiguration();
+
+    multiClientTransformer = new MultiClientTransformer();
+
+    logger.info({
+      msg: 'Multi-client transformer initialized',
+      clientsLoaded: clientLoader.getMetadata()?.clientCount || 0,
+    });
+  }
+  return multiClientTransformer;
+}
+
+/**
  * POST /transform
- * Main transformation endpoint
+ * Multi-client fan-out transformation endpoint (Primary)
  */
 router.post('/transform', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  const correlationId = (req.headers['x-correlation-id'] as string) || uuidv4();
+  const orchestrations: any[] = [];
+
+  try {
+    logger.info({
+      msg: 'Received multi-client transformation request',
+      correlationId,
+      contentType: req.headers['content-type'],
+    });
+
+    // Step 1: Validate CloudEvent
+    const cloudEvent = req.body;
+    const validationResult = validateCloudEvent(cloudEvent);
+
+    if (!validationResult.valid) {
+      logger.warn({
+        msg: 'CloudEvent validation failed',
+        correlationId,
+        errors: validationResult.errors,
+      });
+
+      const response = buildMediatorResponse(
+        'Failed',
+        400,
+        `Invalid CloudEvent: ${validationResult.errors?.join(', ')}`,
+        orchestrations
+      );
+
+      return res.status(400).json(response);
+    }
+
+    logger.debug({
+      msg: 'CloudEvent validated successfully',
+      correlationId,
+      eventId: cloudEvent.id,
+      eventType: cloudEvent.type,
+    });
+
+    // Step 2: Initialize multi-client transformer
+    const transformer = await getMultiClientTransformer();
+
+    // Step 3: Process and fan-out to all matching clients
+    const fanOutStartTime = Date.now();
+    const fanOutResult = await transformer.processAndFanOut(cloudEvent);
+
+    // Step 4: Build orchestrations for each client delivery
+    fanOutResult.results.forEach((clientResult, index) => {
+      orchestrations.push({
+        name: `Transform for ${clientResult.clientName}`,
+        request: {
+          method: 'INTERNAL',
+          body: JSON.stringify({
+            clientId: clientResult.clientId,
+            transformationRule: clientResult.transformationRule,
+            eventType: cloudEvent.type,
+          }),
+          timestamp: new Date(fanOutStartTime).toISOString(),
+        },
+        response: {
+          status: clientResult.success ? 200 : 500,
+          body: JSON.stringify({
+            success: clientResult.success,
+            error: clientResult.errorMessage,
+          }),
+          timestamp: clientResult.timestamp,
+        },
+      });
+
+      if (clientResult.success) {
+        orchestrations.push({
+          name: `Forward to ${clientResult.clientName}`,
+          request: {
+            method: 'POST',
+            url: clientResult.endpoint,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Event-Id': cloudEvent.id,
+              'X-Event-Type': cloudEvent.type,
+            },
+            timestamp: clientResult.timestamp,
+          },
+          response: {
+            status: clientResult.statusCode || 200,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ delivered: true }),
+            timestamp: clientResult.timestamp,
+          },
+        });
+      }
+    });
+
+    // Step 5: Determine overall status
+    const overallStatus = fanOutResult.failedDeliveries === 0 ? 'Successful' :
+                          fanOutResult.successfulDeliveries === 0 ? 'Failed' :
+                          'Successful'; // Partial success still counts as successful
+
+    const totalDuration = Date.now() - startTime;
+
+    logger.info({
+      msg: 'Multi-client transformation completed',
+      correlationId,
+      eventId: cloudEvent.id,
+      totalClients: fanOutResult.totalClients,
+      successfulDeliveries: fanOutResult.successfulDeliveries,
+      failedDeliveries: fanOutResult.failedDeliveries,
+      totalDuration,
+    });
+
+    const response = buildMediatorResponse(
+      overallStatus,
+      200,
+      `CloudEvent transformed and delivered to ${fanOutResult.successfulDeliveries}/${fanOutResult.totalClients} clients`,
+      orchestrations
+    );
+
+    // Include fan-out results in the response body
+    response.response.body = JSON.stringify({
+      message: `CloudEvent transformed and delivered to ${fanOutResult.successfulDeliveries}/${fanOutResult.totalClients} clients`,
+      eventId: cloudEvent.id,
+      eventType: cloudEvent.type,
+      fanOutResult,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.status(200).json(response);
+  } catch (error: any) {
+    logger.error({
+      msg: 'Unexpected error in multi-client transformation endpoint',
+      correlationId,
+      error: error.message,
+      stack: error.stack,
+    });
+
+    const response = buildMediatorResponse(
+      'Failed',
+      500,
+      `Internal server error: ${error.message}`,
+      orchestrations
+    );
+
+    return res.status(500).json(response);
+  }
+});
+
+/**
+ * POST /transform/single
+ * Single-destination transformation endpoint (Legacy/Fallback)
+ */
+router.post('/transform/single', async (req: Request, res: Response) => {
   const startTime = Date.now();
   const correlationId = (req.headers['x-correlation-id'] as string) || uuidv4();
   const orchestrations: any[] = [];

@@ -47,6 +47,9 @@ COPY --from=builder /app/apps/mediator-services/transformation-mediator/dist ./a
 # Copy mediatorConfig.json (required at runtime)
 COPY --from=builder /app/apps/mediator-services/transformation-mediator/mediatorConfig.json ./apps/mediator-services/transformation-mediator/mediatorConfig.json
 
+# Copy clients configuration (required for multi-client fan-out)
+COPY --from=builder /app/apps/mediator-services/transformation-mediator/clients.config.json ./apps/mediator-services/transformation-mediator/clients.config.json
+
 # Copy transformation rules (required at runtime)
 COPY --from=builder /app/apps/mediator-services/transformation-mediator/transformation-rules ./apps/mediator-services/transformation-mediator/transformation-rules
 
