@@ -10,6 +10,7 @@ import bodyParser from 'body-parser';
 import { config } from './config';
 import { getLogger } from './utils/logger';
 import { registerWithOpenHIM, unregisterFromOpenHIM } from './utils/registration';
+import { createDefaultChannels } from './utils/channel-manager';
 import { loadRules } from './rules/rule-loader';
 import transformRoutes from './routes/transform.routes';
 
@@ -144,6 +145,17 @@ async function start(): Promise<void> {
     try {
       await registerWithOpenHIM();
       logger.info({ msg: 'OpenHIM registration completed successfully' });
+
+      // Step 4a: Create default channels from mediatorConfig
+      try {
+        await createDefaultChannels();
+        logger.info({ msg: 'Channel creation completed' });
+      } catch (channelError: any) {
+        logger.warn({
+          msg: 'Channel creation failed but mediator will continue',
+          error: channelError.message,
+        });
+      }
     } catch (error: any) {
       logger.error({
         msg: 'Failed to register with OpenHIM',

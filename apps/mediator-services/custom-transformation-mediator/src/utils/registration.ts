@@ -1,24 +1,21 @@
 /**
  * OpenHIM mediator registration and heartbeat
+ * Uses official openhim-mediator-utils library
  */
 
-import axios from 'axios';
-import https from 'https';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - openhim-mediator-utils doesn't have TypeScript definitions
+import { registerMediator, activateHeartbeat } from 'openhim-mediator-utils';
 import { openhimConfig, getMediatorConfig } from '../config/openhim.config';
 import { getLogger } from './logger';
 
 const logger = getLogger('registration');
 
-// Create axios instance with self-signed cert support
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: !openhimConfig.trustSelfSigned,
-});
-
 /**
  * Register mediator with OpenHIM and activate heartbeat
  */
-export async function registerWithOpenHIM(): Promise<void> {
-  try {
+export function registerWithOpenHIM(): Promise<void> {
+  return new Promise((resolve, reject) => {
     const mediatorConfig = getMediatorConfig();
 
     logger.info({
@@ -28,89 +25,40 @@ export async function registerWithOpenHIM(): Promise<void> {
       version: mediatorConfig.version,
     });
 
-    // Register mediator via OpenHIM API
-    const auth = Buffer.from(`${openhimConfig.username}:${openhimConfig.password}`).toString('base64');
-
-    const response = await axios.post(
-      `${openhimConfig.apiURL}/api/mediators`,
-      mediatorConfig,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`,
-        },
-        httpsAgent,
+    registerMediator(openhimConfig, mediatorConfig, (err: any) => {
+      if (err) {
+        logger.error({
+          msg: 'Failed to register mediator with OpenHIM',
+          error: err.message,
+          stack: err.stack,
+        });
+        return reject(err);
       }
-    );
 
-    logger.info({
-      msg: 'Custom transformation mediator registered successfully with OpenHIM',
-      urn: mediatorConfig.urn,
-      name: mediatorConfig.name,
-      status: response.status,
-    });
+      logger.info({
+        msg: 'Custom transformation mediator registered successfully with OpenHIM',
+        urn: mediatorConfig.urn,
+        name: mediatorConfig.name,
+      });
 
-    // Start heartbeat (simple version - send heartbeat every 30 seconds)
-    startHeartbeat();
-  } catch (error: any) {
-    logger.error({
-      msg: 'Failed to register mediator with OpenHIM',
-      error: error.message,
-      response: error.response?.data,
-      stack: error.stack,
-    });
-    throw error;
-  }
-}
-
-/**
- * Send heartbeat to OpenHIM
- */
-async function sendHeartbeat(): Promise<void> {
-  try {
-    const mediatorConfig = getMediatorConfig();
-    const auth = Buffer.from(`${openhimConfig.username}:${openhimConfig.password}`).toString('base64');
-
-    await axios.post(
-      `${openhimConfig.apiURL}/api/mediators/${mediatorConfig.urn}/heartbeat`,
-      {
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString(),
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`,
-        },
-        httpsAgent,
+      // Activate heartbeat
+      try {
+        const heartbeatInterval = activateHeartbeat(openhimConfig);
+        logger.info({
+          msg: 'Heartbeat activated',
+          interval: heartbeatInterval,
+        });
+      } catch (heartbeatErr: any) {
+        logger.warn({
+          msg: 'Failed to activate heartbeat',
+          error: heartbeatErr.message,
+        });
+        // Don't reject - mediator can still function without heartbeat
       }
-    );
 
-    logger.debug({ msg: 'Heartbeat sent to OpenHIM' });
-  } catch (error: any) {
-    logger.warn({
-      msg: 'Failed to send heartbeat',
-      error: error.message,
+      resolve();
     });
-  }
-}
-
-let heartbeatInterval: NodeJS.Timeout | null = null;
-
-/**
- * Start heartbeat interval
- */
-function startHeartbeat(): void {
-  if (heartbeatInterval) {
-    return;
-  }
-
-  // Send heartbeat every 30 seconds
-  heartbeatInterval = setInterval(() => {
-    sendHeartbeat();
-  }, 30000);
-
-  logger.info({ msg: 'Heartbeat activated', interval: '30s' });
+  });
 }
 
 /**
@@ -118,10 +66,6 @@ function startHeartbeat(): void {
  */
 export function unregisterFromOpenHIM(): void {
   logger.info({ msg: 'Unregistering custom transformation mediator from OpenHIM' });
-
-  if (heartbeatInterval) {
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = null;
-    logger.info({ msg: 'Heartbeat stopped' });
-  }
+  // openhim-mediator-utils doesn't provide explicit unregister
+  // Heartbeat will simply stop when process exits
 }
