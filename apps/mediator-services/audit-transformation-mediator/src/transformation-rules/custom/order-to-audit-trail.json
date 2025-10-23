@@ -1,0 +1,58 @@
+{
+  "name": "order-to-audit-trail",
+  "version": "1.0",
+  "description": "Transform order CloudEvent to Audit Trail format (compliance, history, accountability)",
+  "eventType": "order.created",
+  "targetFormat": "custom-json",
+  "enabled": true,
+  "mappings": [
+    {
+      "source": "$.data.orderId",
+      "target": "$.orderId",
+      "required": true,
+      "description": "Order ID for audit trail"
+    },
+    {
+      "source": "$.time",
+      "target": "$.eventTimestamp",
+      "required": true,
+      "description": "Event creation timestamp"
+    },
+    {
+      "source": "$.source",
+      "target": "$.eventSource",
+      "required": true,
+      "description": "Source system identifier"
+    },
+    {
+      "source": "$.id",
+      "target": "$.correlationId",
+      "required": true,
+      "description": "Correlation ID for tracing"
+    },
+    {
+      "source": "$.data.requestedBy",
+      "target": "$.trail.initiator",
+      "required": false,
+      "defaultValue": "system",
+      "description": "User who initiated the order"
+    },
+    {
+      "source": "$.data.facilityId",
+      "target": "$.trail.facility",
+      "required": false,
+      "description": "Facility where order was created"
+    },
+    {
+      "source": "$.data.departmentId",
+      "target": "$.trail.department",
+      "required": false,
+      "description": "Department that created the order"
+    }
+  ],
+  "compliance": {
+    "auditRequired": true,
+    "dataClassification": "sensitive",
+    "retentionDays": 2555
+  }
+}

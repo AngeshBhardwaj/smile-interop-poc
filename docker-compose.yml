@@ -425,6 +425,86 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  # Finance Transformation Mediator - Transforms CloudEvents to Finance Details format
+  finance-transformation-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/finance-transformation-mediator/Dockerfile
+    container_name: smile-finance-transformation-mediator
+    ports:
+      - "3302:3302"
+    environment:
+      NODE_ENV: development
+      PORT: 3302
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Client Configuration
+      CLIENT_ENDPOINT: http://mock-client-finance:3202/orders
+      CLIENT_NAME: Finance Accounting Client
+      CLIENT_TIMEOUT: 5000
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+      mock-client-finance:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3302/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Audit Transformation Mediator - Transforms CloudEvents to Audit Trail format
+  audit-transformation-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/audit-transformation-mediator/Dockerfile
+    container_name: smile-audit-transformation-mediator
+    ports:
+      - "3303:3303"
+    environment:
+      NODE_ENV: development
+      PORT: 3303
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Client Configuration
+      CLIENT_ENDPOINT: http://mock-client-audit:3201/orders
+      CLIENT_NAME: Audit Compliance Client
+      CLIENT_TIMEOUT: 5000
+
+      # Audit Client Credentials (passed to mock-client-audit)
+      AUDIT_CLIENT_USERNAME: "audit-user"
+      AUDIT_CLIENT_PASSWORD: "audit-secure-pass"
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+      mock-client-audit:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3303/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
   # Custom Transformation Mediator - Transforms CloudEvents to Custom JSON for Warehouse
   custom-transformation-mediator:
     build:
@@ -527,6 +607,53 @@ services:
       - smile-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3203/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Finance Client - Receives transformed finance details from finance-transformation-mediator
+  mock-client-finance:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-warehouse/Dockerfile
+    container_name: smile-mock-client-finance
+    ports:
+      - "3202:3202"
+    environment:
+      NODE_ENV: development
+      PORT: 3202
+      CLIENT_NAME: "Finance Accounting Client"
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3202/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Audit Client - Receives transformed audit trail from audit-transformation-mediator (requires Basic Auth)
+  mock-client-audit:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-audit/Dockerfile
+    container_name: smile-mock-client-audit
+    ports:
+      - "3201:3201"
+    environment:
+      NODE_ENV: development
+      PORT: 3201
+      CLIENT_NAME: "Audit Compliance Client"
+      # Authentication credentials for this client
+      AUDIT_USERNAME: "audit-user"
+      AUDIT_PASSWORD: "audit-secure-pass"
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3201/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,0 +1,64 @@
+{
+  "name": "order-to-finance-details",
+  "version": "1.0",
+  "description": "Transform order CloudEvent to Finance Details format (pricing, tax, accounting, payment)",
+  "eventType": "order.created",
+  "targetFormat": "custom-json",
+  "enabled": true,
+  "mappings": [
+    {
+      "source": "$.data.orderId",
+      "target": "$.orderId",
+      "required": true,
+      "description": "Order ID"
+    },
+    {
+      "source": "$.data.items",
+      "target": "$.items",
+      "required": true,
+      "description": "Line items with pricing"
+    },
+    {
+      "source": "$.data.paymentMethod",
+      "target": "$.paymentMethod",
+      "required": false,
+      "defaultValue": "credit-card",
+      "description": "Payment method for order"
+    },
+    {
+      "source": "$.time",
+      "target": "$.createdAt",
+      "required": true,
+      "description": "Order creation timestamp"
+    },
+    {
+      "source": "$.id",
+      "target": "$.externalOrderRef",
+      "required": true,
+      "description": "Correlation ID from CloudEvent"
+    },
+    {
+      "source": "$.source",
+      "target": "$.sourceSystem",
+      "required": true,
+      "description": "Source system identifier"
+    }
+  ],
+  "calculations": [
+    {
+      "name": "subtotal",
+      "formula": "sum(items[*].unitPrice * items[*].quantity)",
+      "description": "Sum of all line item totals"
+    },
+    {
+      "name": "tax",
+      "formula": "subtotal * 0.08",
+      "description": "Tax calculation (8% tax rate)"
+    },
+    {
+      "name": "total",
+      "formula": "subtotal + tax",
+      "description": "Final total amount"
+    }
+  ]
+}
