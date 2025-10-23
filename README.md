@@ -1,16 +1,27 @@
 # SMILE Health Interoperability Layer POC
 
-A proof-of-concept implementation of an event-driven interoperability layer for health domain applications, built with Node.js, TypeScript, and OpenHIM.
+A proof-of-concept implementation of an **event-driven multi-mediator orchestration system** for health domain applications, demonstrating OpenHIM's capability to route single CloudEvents to multiple transformation mediators with domain-specific data formats.
 
-## 🏗️ Architecture
+Built with Node.js, TypeScript, Express.js, OpenHIM, and RabbitMQ.
 
-This POC implements a clean, event-driven architecture with the following components:
+## 🏗️ Architecture Overview
 
-- **App Service**: Emits CloudEvents for health application events
-- **Interop Layer**: Core routing and mediation logic
-- **Mediator Services**: OpenHIM-compatible mediators for data transformation
-- **Webhook Services**: HTTP endpoints for OpenHIM integration
-- **Client Service**: Consumes transformed CloudEvents
+This POC implements a clean, event-driven architecture showcasing OpenHIM's multi-route orchestration:
+
+```
+Health/Orders Service → RabbitMQ (CloudEvent) → Interop Layer
+                                                      ↓
+                                            OpenHIM Core Channel
+                                                      ↓
+                ┌─────────────────────────────────────┼─────────────────────────────────────┐
+                ↓                                      ↓                                      ↓
+        Warehouse Mediator              Finance Mediator                      Audit Mediator
+        (Port 3301)                     (Port 3302)                           (Port 3303)
+                ↓                                      ↓                                      ↓
+        Warehouse Client                Finance Client                      Audit Client
+        (Port 3203)                     (Port 3202)                          (Port 3201)
+        Custom JSON Format             Pricing/Tax Data                      Audit Trail + Auth
+```
 
 ## 🚀 Quick Start
 
@@ -21,166 +32,200 @@ This POC implements a clean, event-driven architecture with the following compon
 - Docker & Docker Compose
 - WSL (for Windows users)
 
-### Setup
+### Setup & Start
 
-1. **Install dependencies and build**:
+```bash
+# Install dependencies
+pnpm install
 
-   ```bash
-   make setup
-   ```
+# Start all Docker services (infrastructure + mediators + clients)
+docker-compose up -d
 
-2. **Start infrastructure services**:
+# Check service health
+docker-compose ps
+```
 
-   ```bash
-   make docker-up
-   ```
+## 🌐 Access Points
 
-3. **Start development servers**:
-   ```bash
-   make dev
-   ```
-
-### Access Points
-
-#### 🏥 SMILE Services
+### SMILE Services
 
 **Health Service** (HIPAA-compliant Patient Registration)
 
-- **Swagger API Docs**: http://localhost:3004/api/docs
-- **Health Check**: http://localhost:3004/health
-- **Features**: Patient registration, PII/PHI data masking, HIPAA audit logging
-- **Auth**: API Key: `health-api-key-dev` OR Bearer: `mock-jwt-token`
+- **Port**: 3004
+- **Swagger**: http://localhost:3004/api/docs
+- **Health**: http://localhost:3004/health
 
-**Orders Service** (Order Lifecycle Management)
+**Orders Service** (Order Lifecycle Management - CloudEvent Emitter)
 
-- **Swagger API Docs**: http://localhost:3005/api/docs
-- **Health Check**: http://localhost:3005/health
-- **Features**: Complete order workflow, state transitions, return processing
-- **Auth**: API Key: `orders-api-key-dev` OR Bearer: `mock-jwt-token`
-- **Sample Data**: See `sample-order-request.json`
+- **Port**: 3005
+- **Swagger**: http://localhost:3005/api/docs
+- **Health**: http://localhost:3005/health
+- **Sample Request**: `sample-order-request.json`
 
-#### 🔧 Infrastructure Services
+### Multi-Mediator Orchestration
+
+**Transformation Mediators:**
+
+- **Warehouse Mediator** (Port 3301): Custom JSON transformation for warehouse systems
+- **Finance Mediator** (Port 3302): Pricing/tax calculation transformations
+- **Audit Mediator** (Port 3303): Audit trail with Basic Auth credential handling
+- **Custom Mediator** (Port 3205): Alternative warehouse transformation approach
+
+**Mock Client Services** (with Swagger UI):
+
+- **Warehouse Client** (Port 3203): http://localhost:3203/api-docs/ - Receives warehouse-specific format
+- **Finance Client** (Port 3202): http://localhost:3202/api-docs/ - Receives finance details with pricing
+- **Audit Client** (Port 3201): http://localhost:3201/api-docs/ - Receives audit trail (requires `audit-user:audit-secure-pass` Basic Auth)
+
+**OpenHIM Routing:**
+
+- Orders service emits CloudEvent to RabbitMQ
+- Interop Layer routes event to OpenHIM `/transform` channel
+- OpenHIM simultaneously routes to all three mediators (primary + secondary)
+- Each mediator transforms data per client requirements
+- Clients receive domain-specific transformed data
+
+### Infrastructure Services
 
 - **RabbitMQ Management**: http://localhost:15672 (admin/admin123)
 - **OpenHIM Console**: http://localhost:9000
-- **OpenHIM Core API**: https://127.0.0.1:8080 (HTTPS only, use 127.0.0.1)
+- **OpenHIM Core API**: https://127.0.0.1:8080
 - **Jaeger Tracing**: http://localhost:16686
 - **Grafana**: http://localhost:3001 (admin/admin123)
 - **Prometheus**: http://localhost:9090
 - **Redis**: localhost:6379
 - **MongoDB**: localhost:27017
 
-## 📋 Available Commands
+## 📋 Testing the Multi-Mediator System
 
-Run `make help` to see all available commands:
-
-```bash
-make help              # Show help
-make setup             # Complete project setup
-make dev               # Start development servers
-make test              # Run tests
-make lint              # Run linting
-make docker-up         # Start Docker services
-make health            # Check service health
-```
-
-## 🧪 Development Workflow
-
-### Test-Driven Development
+### 1. Create an Order (Generates CloudEvent)
 
 ```bash
-# Run tests in watch mode
-make test-watch
-
-# Run specific test suites
-pnpm --filter=@smile/app-service test
-pnpm --filter=@smile/interop-layer test
+curl -X POST http://localhost:3005/api/v1/orders \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer mock-jwt-token" \
+  -d @sample-order-request.json
 ```
 
-### Code Quality
+This will automatically:
+
+- Create an order in the orders-service
+- Emit a CloudEvent to RabbitMQ
+- Trigger the Interop Layer
+- Route through OpenHIM to all three mediators
+- Transform and deliver data to all three clients
+
+### 2. Verify Data in Mock Clients
+
+**Warehouse Client:**
 
 ```bash
-# Quick quality check
-make quick-check
-
-# Full check including tests
-make full-check
+curl -s http://localhost:3203/orders | jq .
 ```
+
+Response includes: Custom warehouse JSON format, external order references, delivery info
+
+**Finance Client:**
+
+```bash
+curl -s http://localhost:3202/orders | jq .
+```
+
+Response includes: Items, subtotal, tax (8%), total, payment status, currency
+
+**Audit Client** (with Basic Auth):
+
+```bash
+curl -s http://localhost:3201/orders \
+  -H "Authorization: Basic YXVkaXQtdXNlcjphdWRpdC1zZWN1cmUtcGFzcw==" | jq .
+```
+
+Response includes: Status history, compliance requirements, data classification, audit trail, retention period (7 years)
+
+### 3. Access Swagger UIs for Testing
+
+- Warehouse: http://localhost:3203/api-docs/
+- Finance: http://localhost:3202/api-docs/
+- Audit: http://localhost:3201/api-docs/ (login with audit-user:audit-secure-pass)
+
+Each Swagger UI shows:
+
+- All received orders/audit trails with timestamps
+- Complete request/response details
+- Authenticated user information
+- Custom transformation data
+
+## 🔧 Key Features
+
+### Multi-Mediator Orchestration
+
+- Single CloudEvent routed to multiple transformation mediators simultaneously
+- Each mediator produces domain-specific output format
+- Primary mediator + 3 secondary mediators (async execution)
+- No waiting for secondary responses
+
+### Transformation Capabilities
+
+- **Warehouse**: Custom JSON with inventory references
+- **Finance**: Pricing calculations with 8% tax, payment metadata
+- **Audit**: Compliance data, status history, 7-year retention policy
+- **Custom**: Alternative warehouse transformation rules
+
+### Authentication & Credential Handling
+
+- Basic Auth credentials configured in OpenHIM route properties
+- Mediators extract and forward credentials to clients
+- Mock clients validate and log authenticated user information
+- Full audit trail of authenticated access
+
+### Dynamic Swagger UI
+
+- Service names configurable via `SERVICE_NAME` environment variable
+- Reusable mock client Dockerfile for multiple services
+- Automatic Swagger title generation per client
+- All endpoints documented and testable
 
 ## 📦 Monorepo Structure
 
 ```
 smile-interop-poc/
 ├── apps/
-│   ├── health-service/        # HIPAA-compliant patient registration (✅ Step 2a)
-│   ├── orders-service/        # Order lifecycle management (✅ Step 2b)
-│   ├── interop-layer/         # Core routing logic
-│   ├── mediator-services/     # OpenHIM mediators
-│   ├── webhook-services/      # HTTP endpoints
-│   └── client-service/        # Event consumer
+│   ├── health-service/              # HIPAA-compliant patient registration
+│   ├── orders-service/              # Order lifecycle (CloudEvent emitter)
+│   ├── interop-layer/               # RabbitMQ listener → OpenHIM router
+│   ├── mediator-services/           # OpenHIM mediators
+│   │   ├── transformation-mediator/        # Primary transformation (3101)
+│   │   ├── warehouse-transformation-mediator/  # Warehouse format (3301)
+│   │   ├── finance-transformation-mediator/    # Finance format (3302)
+│   │   ├── audit-transformation-mediator/      # Audit trail (3303)
+│   │   ├── custom-transformation-mediator/     # Custom warehouse (3205)
+│   │   └── passthrough-mediator/               # Pass-through (3100)
+│   └── webhook-services/            # Mock clients
+│       ├── mock-client-warehouse/       # Warehouse client (3203)
+│       ├── mock-client-audit/           # Audit client (3201) with Basic Auth
+│       └── (mock-client-fhir/hl7 disabled - port conflicts)
 ├── packages/
-│   ├── common/                # Security utilities, audit logging, data masking
-│   ├── cloud-events/          # CloudEvents SDK wrapper
-│   └── openhim-adapter/       # OpenHIM integration
-├── docker/                    # Docker configurations
-├── tests/                     # Integration tests
-└── docs/                      # Documentation
+│   ├── common/                  # Shared utilities
+│   ├── cloud-events/            # CloudEvents SDK wrapper
+│   └── mediator-common/         # Mediator shared code
+├── docker/
+│   ├── docker-compose.yml       # Complete stack orchestration
+│   └── openhim/                 # OpenHIM configuration
+├── CLAUDE.md                    # Project development guidelines
+├── interop-poc-plan-gpt.prompt.md # Original architecture plan
+└── README.md                    # This file
 ```
 
 ## 🏥 Implemented Services
 
-### Health Service (Step 2a - Complete ✅)
+### Orders Service (Complete ✅)
 
-**HIPAA-Compliant Patient Registration Service**
-
-- **Port**: 3004
-- **Swagger**: http://localhost:3004/api/docs
-- **Test Coverage**: 90%+ (265 tests passing)
-
-**Features:**
-
-- Patient registration with full PII/PHI protection
-- Automatic data masking in logs and events
-- HIPAA-compliant audit trails
-- Field-level encryption for sensitive data
-- CloudEvents emission for patient lifecycle events
-- Comprehensive validation and error handling
-
-**Order Workflow States:**
-
-```
-Registration → Active → Inactive/Deceased
-```
-
-**API Endpoints:**
-
-- `POST /api/v1/patients` - Register new patient
-- `GET /api/v1/patients` - List patients (masked data)
-- `GET /api/v1/patients/:id` - Get patient details
-- `PUT /api/v1/patients/:id` - Update patient info
-- `DELETE /api/v1/patients/:id` - Soft delete patient
-
-**Sample Request:** See `sample-patient-request.json`
-
-### Orders Service (Step 2b - Complete ✅)
-
-**Order Lifecycle Management Service**
+**Order Lifecycle Management with CloudEvent Emission**
 
 - **Port**: 3005
 - **Swagger**: http://localhost:3005/api/docs
-- **Test Coverage**: 90%+ (265 tests passing)
 
-**Features:**
-
-- Complete order lifecycle management
-- State-driven workflow with validation
-- Support for medicines, equipment, supplies, vaccines
-- Return and rejection workflows
-- Role-based access control
-- CloudEvents emission for all state changes
-- Comprehensive audit logging
-
-**Order Workflow States:**
+**Order States:**
 
 ```
 DRAFT → SUBMITTED → APPROVED → PACKED → SHIPPED → RECEIVED → FULFILLED
@@ -188,154 +233,209 @@ DRAFT → SUBMITTED → APPROVED → PACKED → SHIPPED → RECEIVED → FULFILL
   ← ← ← ← ← ← ← ← REJECTED                      RETURNED → RETURN_COMPLETE
 ```
 
-**API Endpoints:**
-
-_Core CRUD:_
-
-- `POST /api/v1/orders` - Create new order (DRAFT)
-- `GET /api/v1/orders` - List orders with filtering
-- `GET /api/v1/orders/:id` - Get order details
-- `PUT /api/v1/orders/:id` - Update order (DRAFT/REJECTED only)
-- `DELETE /api/v1/orders/:id` - Delete order (DRAFT only)
-
-_State Transitions:_
-
-- `POST /api/v1/orders/:id/submit` - Submit for approval
-- `POST /api/v1/orders/:id/approve` - Approve order
-- `POST /api/v1/orders/:id/reject` - Reject order
-
-_Fulfillment:_
-
-- `POST /api/v1/orders/:id/pack` - Mark as packed
-- `POST /api/v1/orders/:id/ship` - Mark as shipped
-- `POST /api/v1/orders/:id/receive` - Mark as received
-- `POST /api/v1/orders/:id/fulfill` - Mark as fulfilled
-
-_Returns:_
-
-- `POST /api/v1/orders/:id/return` - Initiate return
-- `POST /api/v1/orders/:id/complete-return` - Complete return
-
-**Sample Request:** See `sample-order-request.json`
-
-## 🔧 Configuration
-
-Create environment files:
+**Sample Request:**
 
 ```bash
-make env-example  # Creates .env.example
-cp .env.example .env
+curl -X POST http://localhost:3005/api/v1/orders \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer mock-jwt-token" \
+  -d '{
+    "items": [...],
+    "facilityId": "facility-001",
+    "departmentId": "purchasing",
+    "priority": "normal"
+  }'
 ```
+
+### Health Service (Complete ✅)
+
+**HIPAA-Compliant Patient Registration**
+
+- **Port**: 3004
+- **Swagger**: http://localhost:3004/api/docs
+- **Features**: PII masking, HIPAA audit logging, CloudEvents emission
 
 ## 🐳 Docker Deployment
 
-### Single Command Deployment
-
-Bring up the entire SMILE application stack with a single command:
+### Complete Stack
 
 ```bash
-make docker-up    # Starts all infrastructure and application services
+# Start entire system
+docker-compose up -d
+
+# Check all services
+docker-compose ps
+
+# View logs
+docker-compose logs -f [service-name]
+
+# Stop everything
+docker-compose down
 ```
 
-This command will:
+### Services Running in Docker
 
-- Build Docker images for health-service and orders-service
-- Start all infrastructure services (RabbitMQ, MongoDB, Redis, etc.)
-- Start application services with proper health checks
-- Configure networking between all containers
+**Application Layer:**
 
-### Teardown
+- health-service (3004)
+- orders-service (3005)
+- interop-layer (3002)
 
-```bash
-make docker-down  # Stops and removes all containers
+**Mediators:**
+
+- transformation-mediator (3101)
+- warehouse-transformation-mediator (3301)
+- finance-transformation-mediator (3302)
+- audit-transformation-mediator (3303)
+- custom-transformation-mediator (3205)
+- passthrough-mediator (3100)
+
+**Mock Clients:**
+
+- mock-client-warehouse (3203)
+- mock-client-finance (3202)
+- mock-client-audit (3201)
+
+**Infrastructure:**
+
+- RabbitMQ (5672, 15672)
+- MongoDB (27017)
+- OpenHIM Core (5000, 5001, 8080)
+- OpenHIM Console (9000)
+- Jaeger (16686)
+- Prometheus (9090)
+- Grafana (3001)
+- Redis (6379)
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Key configurations in `docker-compose.yml`:
+
+**Mediators:**
+
+```yaml
+# Warehouse Mediator
+PORT: 3301
+CLIENT_ENDPOINT: http://mock-client-warehouse:3203/orders
+CLIENT_NAME: Warehouse Fulfillment
+
+# Finance Mediator
+PORT: 3302
+CLIENT_ENDPOINT: http://mock-client-finance:3202/orders
+CLIENT_NAME: Finance Accounting
+
+# Audit Mediator (with credentials)
+PORT: 3303
+CLIENT_ENDPOINT: http://mock-client-audit:3201/orders
+AUDIT_CLIENT_USERNAME: "audit-user"
+AUDIT_CLIENT_PASSWORD: "audit-secure-pass"
 ```
 
-### Container Services
+**Mock Clients:**
 
-The complete Docker stack includes:
-
-**Application Services:**
-
-- **health-service**: HIPAA-compliant patient registration (Port 3004)
-- **orders-service**: Order lifecycle management (Port 3005)
-
-**Infrastructure Services:**
-
-- **RabbitMQ**: Message broker with management UI (Ports 5672, 15672)
-- **MongoDB**: Database for OpenHIM (Port 27017)
-- **OpenHIM Core**: Health information mediator (Ports 5000, 5001, 8080)
-- **OpenHIM Console**: Web administration interface (Port 9000)
-- **Jaeger**: Distributed tracing (Port 16686)
-- **Prometheus**: Metrics collection (Port 9090)
-- **Grafana**: Metrics visualization (Port 3001)
-- **Redis**: Caching layer (Port 6379)
-
-### Health Checks
-
-All services include health checks to ensure proper startup sequence:
-
-- Application services wait for RabbitMQ to be healthy
-- OpenHIM Console waits for OpenHIM Core to be healthy
-- MongoDB, RabbitMQ, and Redis have built-in health checks
-
-### Swagger in Docker
-
-Both health-service and orders-service Swagger UIs are fully functional in Docker mode:
-
-- **Health Service**: http://localhost:3004/api/docs
-- **Orders Service**: http://localhost:3005/api/docs
-
-All API endpoints are available for testing directly from the Swagger interface.
-
-## 🏥 Health Monitoring
-
-Check service health:
-
-```bash
-make health
-```
-
-View logs:
-
-```bash
-make docker-logs        # All Docker services
-make logs-app          # App service only
-make logs-interop      # Interop layer only
+```yaml
+# Service names (configurable)
+SERVICE_NAME: Warehouse  # For warehouse client
+SERVICE_NAME: Finance    # For finance client
 ```
 
 ## 🧩 Event Flow
 
-1. **App Service** emits CloudEvents to RabbitMQ
-2. **Interop Layer** consumes events and applies routing rules
-3. **Mediator Services** transform data based on client requirements
-4. **OpenHIM Integration** ensures health standard compliance
-5. **Client Services** receive transformed events
+1. **Order Creation**: Orders service creates order (CloudEvent emitted)
+2. **Message Broker**: CloudEvent published to RabbitMQ
+3. **Routing**: Interop Layer consumes and routes to OpenHIM
+4. **Orchestration**: OpenHIM routes to all configured mediators
+5. **Transformation**:
+   - Warehouse Mediator → Custom JSON format
+   - Finance Mediator → Pricing/tax calculations
+   - Audit Mediator → Audit trail with compliance data
+6. **Delivery**: All clients receive their domain-specific transformed data
 
-## 📖 Documentation
+## 📊 Verification Points
 
-- [Architecture Decision Records](./docs/adr/) - Design decisions
-- [API Documentation](./docs/api/) - Auto-generated API docs
+### Mediator Health
+
+```bash
+# All mediators expose /health endpoint
+curl http://localhost:3301/health    # Warehouse
+curl http://localhost:3302/health    # Finance
+curl http://localhost:3303/health    # Audit
+```
+
+### Client Verification
+
+```bash
+# Warehouse client
+curl http://localhost:3203/orders | jq '.totalOrders'
+
+# Finance client
+curl http://localhost:3202/orders | jq '.totalOrders'
+
+# Audit client (with auth)
+curl -H "Authorization: Basic $(echo -n 'audit-user:audit-secure-pass' | base64)" \
+  http://localhost:3201/orders | jq '.totalAuditTrails'
+```
+
+## 🧪 Testing Strategy
+
+- **Unit Tests**: Jest for individual functions
+- **Integration Tests**: Supertest for API endpoints
+- **Manual Testing**: Swagger UIs for all clients
+- **Docker Testing**: All services fully functional in Docker
 
 ## 🛠️ Troubleshooting
 
-Run diagnostics:
+### Port Conflicts
 
 ```bash
-make troubleshoot
+# List running services
+docker-compose ps
+
+# Check specific port
+lsof -i :3301  # Example: check port 3301
 ```
 
-Common issues:
+### Service Health Issues
 
-- **Port conflicts**: Check Docker port mappings
-- **Build failures**: Run `make clean && make setup`
-- **Connection issues**: Verify services with `make health`
+```bash
+# View service logs
+docker-compose logs -f [service-name]
+
+# Check OpenHIM configuration
+# Access: http://localhost:9000 (OpenHIM Console)
+```
+
+### Build Failures
+
+```bash
+# Clean and rebuild
+docker-compose down
+docker-compose up -d --build
+```
+
+## 🚀 Current Implementation Status
+
+✅ **Multi-Mediator Orchestration**: Single event routed to 5 mediators simultaneously
+✅ **Transformation Mediators**: Warehouse, Finance, Audit with domain-specific formats
+✅ **Credential Handling**: Basic Auth integrated with OpenHIM route configuration
+✅ **Mock Clients**: Swagger UI endpoints with request logging
+✅ **Event-Driven Architecture**: CloudEvents via RabbitMQ
+✅ **OpenHIM Integration**: Full primary + secondary route support
+✅ **Docker Deployment**: Complete stack in docker-compose
+
+## 📖 Documentation
+
+- **interop-poc-plan-gpt.prompt.md**: Original architecture planning document
 
 ## 🤝 Contributing
 
 1. Follow TDD approach - write tests first
 2. Use conventional commit messages
 3. Run quality checks before committing: `make full-check`
-4. Use `make commit` for guided commit creation
+4. Update README when adding new mediators or clients
+5. Keep service names generic (use SERVICE_NAME env variable)
 
 ## 📄 License
 
