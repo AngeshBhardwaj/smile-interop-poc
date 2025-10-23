@@ -345,6 +345,64 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  apps/mediator-services/audit-transformation-mediator:
+    dependencies:
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
+      ajv-formats:
+        specifier: ^2.1.1
+        version: 2.1.1(ajv@8.17.1)
+      axios:
+        specifier: ^1.6.2
+        version: 1.12.2
+      body-parser:
+        specifier: ^1.20.2
+        version: 1.20.3
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      joi:
+        specifier: ^17.11.0
+        version: 17.13.3
+      jsonpath-plus:
+        specifier: ^7.2.0
+        version: 7.2.0
+      openhim-mediator-utils:
+        specifier: ^0.2.3
+        version: 0.2.4
+      pino:
+        specifier: ^8.16.2
+        version: 8.21.0
+      pino-pretty:
+        specifier: ^10.3.1
+        version: 10.3.1
+      uuid:
+        specifier: ^9.0.1
+        version: 9.0.1
+    devDependencies:
+      '@types/body-parser':
+        specifier: ^1.19.5
+        version: 1.19.6
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      '@types/node':
+        specifier: ^20.10.4
+        version: 20.19.19
+      '@types/uuid':
+        specifier: ^9.0.7
+        version: 9.0.8
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.19.19)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   apps/mediator-services/custom-transformation-mediator:
     dependencies:
       ajv:
@@ -403,8 +461,14 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  apps/mediator-services/fhir-transformation-mediator:
+  apps/mediator-services/finance-transformation-mediator:
     dependencies:
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
+      ajv-formats:
+        specifier: ^2.1.1
+        version: 2.1.1(ajv@8.17.1)
       axios:
         specifier: ^1.6.2
         version: 1.12.2
@@ -417,12 +481,21 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.21.2
+      joi:
+        specifier: ^17.11.0
+        version: 17.13.3
       jsonpath-plus:
         specifier: ^7.2.0
         version: 7.2.0
+      openhim-mediator-utils:
+        specifier: ^0.2.3
+        version: 0.2.4
       pino:
         specifier: ^8.16.2
         version: 8.21.0
+      pino-pretty:
+        specifier: ^10.3.1
+        version: 10.3.1
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -763,6 +836,43 @@ importers:
         version: 4.20.6
       typescript:
         specifier: ^5.3.3
+        version: 5.9.3
+
+  apps/webhook-services/mock-client-audit:
+    dependencies:
+      body-parser:
+        specifier: ^1.20.2
+        version: 1.20.3
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      swagger-jsdoc:
+        specifier: ^6.2.8
+        version: 6.2.8(openapi-types@12.1.3)
+      swagger-ui-express:
+        specifier: ^5.0.0
+        version: 5.0.1(express@4.21.2)
+    devDependencies:
+      '@types/body-parser':
+        specifier: ^1.19.2
+        version: 1.19.6
+      '@types/express':
+        specifier: ^4.17.17
+        version: 4.17.23
+      '@types/node':
+        specifier: ^20.5.0
+        version: 20.19.19
+      '@types/swagger-jsdoc':
+        specifier: ^6.0.4
+        version: 6.0.4
+      '@types/swagger-ui-express':
+        specifier: ^4.1.6
+        version: 4.1.8
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.1.6
         version: 5.9.3
 
   apps/webhook-services/mock-client-fhir:

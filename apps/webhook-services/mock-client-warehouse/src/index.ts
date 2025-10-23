@@ -10,15 +10,16 @@ import swaggerUi from 'swagger-ui-express';
 
 const app = express();
 const PORT = process.env.PORT || 3203;
+const SERVICE_NAME = process.env.SERVICE_NAME || 'Client';
 
 // Swagger Configuration
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Mock Warehouse Client API',
+      title: `Mock ${SERVICE_NAME} API`,
       version: '1.0.0',
-      description: 'Mock warehouse management system for testing multi-client fan-out with custom JSON format',
+      description: `Mock ${SERVICE_NAME.toLowerCase()} system for testing multi-client fan-out with custom JSON format`,
       contact: {
         name: 'SMILE POC',
       },
@@ -32,7 +33,7 @@ const swaggerOptions = {
     tags: [
       {
         name: 'Orders',
-        description: 'Warehouse order management endpoints',
+        description: 'Order management endpoints',
       },
       {
         name: 'System',
@@ -50,7 +51,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'Warehouse Client API',
+  customSiteTitle: `${SERVICE_NAME} Client API`,
   customCss: '.swagger-ui .topbar { display: none }',
 }));
 

@@ -308,7 +308,7 @@ app.get('/orders/latest', (req: Request, res: Response) => {
   }
 
   const latestTrail = receivedAuditTrails[receivedAuditTrails.length - 1];
-  res.status(200).json({
+  return res.status(200).json({
     service: 'mock-client-audit',
     system: CLIENT_NAME,
     authenticatedUser,
