@@ -1,0 +1,49 @@
+{
+  "name": "order-to-warehouse-summary",
+  "version": "1.0",
+  "description": "Transform order CloudEvent to Warehouse Summary format (minimal fields for fulfillment, packing, delivery)",
+  "eventType": "order.created",
+  "targetFormat": "custom-json",
+  "enabled": true,
+  "mappings": [
+    {
+      "source": "$.data.orderId",
+      "target": "$.orderId",
+      "required": true,
+      "description": "Order ID"
+    },
+    {
+      "source": "$.data.items",
+      "target": "$.itemCount",
+      "transform": "countItems",
+      "required": true,
+      "description": "Count of items in the order"
+    },
+    {
+      "source": "$.data.estimatedWeight",
+      "target": "$.totalWeight",
+      "required": false,
+      "defaultValue": "0kg",
+      "description": "Total estimated weight of order"
+    },
+    {
+      "source": "$.data.deliveryAddress",
+      "target": "$.deliveryAddress",
+      "required": true,
+      "description": "Delivery address for order"
+    },
+    {
+      "source": "$.data.estimatedDeliveryDate",
+      "target": "$.deliveryDate",
+      "transform": "formatDate",
+      "required": false,
+      "description": "Estimated delivery date (ISO 8601)"
+    },
+    {
+      "source": "$.id",
+      "target": "$.externalOrderRef",
+      "required": true,
+      "description": "Correlation ID from CloudEvent"
+    }
+  ]
+}

@@ -51,14 +51,16 @@ router.post('/transform', async (req: Request, res: Response) => {
     transformLogger.info('Received warehouse transformation request', {
       correlationId,
       contentType: req.headers['content-type'],
+      method: req.method,
+      url: req.url,
     });
 
-    // Log raw request body for debugging
-    const rawBodyString = JSON.stringify(req.body);
-    transformLogger.info('Raw request body', {
+    transformLogger.debug('Request received', {
       correlationId,
-      bodyLength: rawBodyString.length,
-      bodyStringified: rawBodyString.substring(0, 300),
+      'content-type': req.headers['content-type'],
+      'content-length': req.headers['content-length'],
+      'x-event-id': req.headers['x-event-id'],
+      'x-event-type': req.headers['x-event-type'],
     });
 
     // Step 1: Validate CloudEvent basic structure
@@ -67,11 +69,11 @@ router.post('/transform', async (req: Request, res: Response) => {
     // Log what we're receiving for debugging
     transformLogger.debug('Request body received', {
       correlationId,
-      bodyKeys: Object.keys(cloudEvent),
-      hasId: !!cloudEvent.id,
-      hasType: !!cloudEvent.type,
-      hasSource: !!cloudEvent.source,
-      hasData: !!cloudEvent.data,
+      bodyKeys: Object.keys(cloudEvent || {}),
+      hasId: !!cloudEvent?.id,
+      hasType: !!cloudEvent?.type,
+      hasSource: !!cloudEvent?.source,
+      hasData: !!cloudEvent?.data,
     });
 
     // Basic CloudEvent validation
