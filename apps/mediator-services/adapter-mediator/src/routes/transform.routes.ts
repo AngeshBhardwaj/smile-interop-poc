@@ -41,12 +41,29 @@ function buildMediatorResponse(
  * Transform pharmacy format to Orders Service JSON
  */
 function transformPharmacyToOrders(pharmacyData: any): any {
+  const items = (pharmacyData.items || []).map((item: any) => ({
+    medicineId: item.medicineId,
+    name: item.name,
+    category: item.category || 'medicine-supplies',
+    unitOfMeasure: item.unitOfMeasure || 'units',
+    quantityOrdered: item.quantity || item.quantityOrdered || 0,
+  }));
+
   return {
-    items: pharmacyData.items || [],
+    orderType: 'medicine',
+    items,
     facilityId: pharmacyData.facility || 'unknown',
     departmentId: 'pharmacy',
     requestedBy: pharmacyData.requested_by || 'system',
     priority: pharmacyData.priority || 'normal',
+    requiredDate: pharmacyData.requiredDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    deliveryAddress: {
+      street: pharmacyData.deliveryAddress?.street || 'Main Street',
+      city: pharmacyData.deliveryAddress?.city || pharmacyData.facility || 'Main City',
+      state: pharmacyData.deliveryAddress?.state || 'ST',
+      zipCode: pharmacyData.deliveryAddress?.zipCode || '12345',
+      country: pharmacyData.deliveryAddress?.country || 'Country',
+    },
     metadata: {
       source: 'pharmacy-system',
       sourceOrderId: pharmacyData.pharmacy_order_id,
@@ -198,6 +215,7 @@ router.post('/transform-downstream', async (req: Request, res: Response): Promis
           headers: {
             'Content-Type': 'application/json',
             'X-Request-ID': correlationId,
+            'Authorization': 'Bearer mock-jwt-token',
           },
           timeout: config.client.timeout,
         });
@@ -207,6 +225,7 @@ router.post('/transform-downstream', async (req: Request, res: Response): Promis
           headers: {
             'Content-Type': 'application/json',
             'X-Request-ID': correlationId,
+            'Authorization': 'Bearer mock-jwt-token',
           },
           timeout: config.client.timeout,
         });
