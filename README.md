@@ -6,12 +6,13 @@ Built with Node.js, TypeScript, Express.js, OpenHIM, and RabbitMQ.
 
 ## 🏗️ Architecture Overview
 
-This POC implements a clean, event-driven architecture showcasing OpenHIM's multi-route orchestration:
+This POC implements a comprehensive, event-driven architecture showcasing OpenHIM's multi-directional capabilities:
 
+### UPSTREAM (Existing - Orders Service Emits Events)
 ```
 Health/Orders Service → RabbitMQ (CloudEvent) → Interop Layer
                                                       ↓
-                                            OpenHIM Core Channel
+                                            OpenHIM Core Channel (/transform)
                                                       ↓
                 ┌─────────────────────────────────────┼─────────────────────────────────────┐
                 ↓                                      ↓                                      ↓
@@ -21,6 +22,16 @@ Health/Orders Service → RabbitMQ (CloudEvent) → Interop Layer
         Warehouse Client                Finance Client                      Audit Client
         (Port 3203)                     (Port 3202)                          (Port 3201)
         Custom JSON Format             Pricing/Tax Data                      Audit Trail + Auth
+```
+
+### DOWNSTREAM (New - External Systems Submit Requests)
+```
+Pharmacy Client ──┐
+(Port 4201)       ├──→ OpenHIM (/orders-inbound) ──→ Adapter Mediator (Port 3204)
+                  │    (Port 5001)                        ↓
+Billing Client ───┘                            Orders Service (Port 3005)
+(Port 4202)                                       ↓
+                                          Order Created/Updated
 ```
 
 ## 🚀 Quick Start
@@ -71,19 +82,33 @@ docker-compose ps
 - **Audit Mediator** (Port 3303): Audit trail with Basic Auth credential handling
 - **Custom Mediator** (Port 3205): Alternative warehouse transformation approach
 
-**Mock Client Services** (with Swagger UI):
+**Upstream Mock Client Services** (with Swagger UI):
 
 - **Warehouse Client** (Port 3203): http://localhost:3203/api-docs/ - Receives warehouse-specific format
 - **Finance Client** (Port 3202): http://localhost:3202/api-docs/ - Receives finance details with pricing
 - **Audit Client** (Port 3201): http://localhost:3201/api-docs/ - Receives audit trail (requires `audit-user:audit-secure-pass` Basic Auth)
 
-**OpenHIM Routing:**
+**Downstream External Client Services** (New - with Swagger UI):
+
+- **Pharmacy Client** (Port 4201): http://localhost:4201/api-docs - Submit orders in pharmacy format
+- **Billing Client** (Port 4202): http://localhost:4202/api-docs - Submit billing information
+- **Adapter Mediator** (Port 3204): http://localhost:3204/health - Transforms downstream requests to Orders Service format
+
+**OpenHIM Routing (UPSTREAM):**
 
 - Orders service emits CloudEvent to RabbitMQ
 - Interop Layer routes event to OpenHIM `/transform` channel
 - OpenHIM simultaneously routes to all three mediators (primary + secondary)
 - Each mediator transforms data per client requirements
 - Clients receive domain-specific transformed data
+
+**OpenHIM Routing (DOWNSTREAM - NEW):**
+
+- Pharmacy/Billing external clients POST to OpenHIM `/orders-inbound` channel
+- OpenHIM authenticates clients and routes to Adapter Mediator
+- Adapter Mediator transforms pharmacy/billing format to Orders Service format
+- Orders Service creates/updates orders
+- Response transformed back to client format and returned
 
 ### Infrastructure Services
 
@@ -96,7 +121,83 @@ docker-compose ps
 - **Redis**: localhost:6379
 - **MongoDB**: localhost:27017
 
-## 📋 Testing the Multi-Mediator System
+## 📋 Testing the System
+
+### Testing Downstream Integration (NEW)
+
+#### 1. Submit a Pharmacy Order
+
+**Using Swagger UI**: http://localhost:4201/api-docs
+
+Or via curl:
+```bash
+curl -X POST http://localhost:4201/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pharmacy_order_id": "PHARM-2025-001",
+    "action": "create_order",
+    "items": ["Aspirin 500mg", "Ibuprofen 200mg"],
+    "facility": "Central Hospital",
+    "requested_by": "Dr. Smith"
+  }'
+```
+
+**Expected Flow**:
+- Pharmacy client forwards to OpenHIM with pharmacy-system credentials
+- OpenHIM routes to Adapter Mediator
+- Adapter Mediator transforms pharmacy format to Orders Service format
+- Order created in Orders Service
+- Response returns to pharmacy client
+
+**Success Response**:
+```json
+{
+  "message": "Pharmacy order submitted successfully",
+  "pharmacy_order_id": "PHARM-2025-001",
+  "orders_service_id": "766636e6-fa01-4d20-8762-84bdbfa305e3",
+  "status": "submitted",
+  "openHIMResponse": {
+    "status": 200,
+    "message": "Order forwarded to OpenHIM successfully"
+  }
+}
+```
+
+#### 2. Submit Billing Information
+
+**Using Swagger UI**: http://localhost:4202/api-docs
+
+Or via curl:
+```bash
+curl -X POST http://localhost:4202/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "update_billing",
+    "order_id": "766636e6-fa01-4d20-8762-84bdbfa305e3",
+    "cost": 2500.50,
+    "currency": "USD",
+    "invoice_number": "INV-2025-001",
+    "payment_status": "pending"
+  }'
+```
+
+**Success Response**:
+```json
+{
+  "message": "Billing information submitted successfully",
+  "order_id": "766636e6-fa01-4d20-8762-84bdbfa305e3",
+  "billing_status": "recorded",
+  "invoice_number": "INV-2025-001",
+  "openHIMResponse": {
+    "status": 200,
+    "message": "Billing information forwarded to OpenHIM successfully"
+  }
+}
+```
+
+---
+
+### Testing the Multi-Mediator System (Upstream)
 
 ### 1. Create an Order (Generates CloudEvent)
 
@@ -195,6 +296,7 @@ smile-interop-poc/
 │   ├── interop-layer/               # RabbitMQ listener → OpenHIM router
 │   ├── mediator-services/           # OpenHIM mediators
 │   │   ├── transformation-mediator/        # Primary transformation (3101)
+│   │   ├── adapter-mediator/               # Downstream transformer (3204) ⭐ NEW
 │   │   ├── warehouse-transformation-mediator/  # Warehouse format (3301)
 │   │   ├── finance-transformation-mediator/    # Finance format (3302)
 │   │   ├── audit-transformation-mediator/      # Audit trail (3303)
@@ -202,6 +304,8 @@ smile-interop-poc/
 │   │   └── passthrough-mediator/               # Pass-through (3100)
 │   └── webhook-services/            # Mock clients
 │       ├── mock-client-warehouse/       # Warehouse client (3203)
+│       ├── mock-client-pharmacy/        # Pharmacy client (4201) ⭐ NEW
+│       ├── mock-client-billing/         # Billing client (4202) ⭐ NEW
 │       ├── mock-client-audit/           # Audit client (3201) with Basic Auth
 │       └── (mock-client-fhir/hl7 disabled - port conflicts)
 ├── packages/
@@ -212,6 +316,7 @@ smile-interop-poc/
 │   ├── docker-compose.yml       # Complete stack orchestration
 │   └── openhim/                 # OpenHIM configuration
 ├── CLAUDE.md                    # Project development guidelines
+├── POC_ENHANCEMENT_PLAN.md      # Enhancement roadmap (Downstream + Orchestration)
 ├── interop-poc-plan-gpt.prompt.md # Original architecture plan
 └── README.md                    # This file
 ```
@@ -284,17 +389,23 @@ docker-compose down
 **Mediators:**
 
 - transformation-mediator (3101)
+- adapter-mediator (3204) ⭐ NEW - Transforms downstream requests
 - warehouse-transformation-mediator (3301)
 - finance-transformation-mediator (3302)
 - audit-transformation-mediator (3303)
 - custom-transformation-mediator (3205)
 - passthrough-mediator (3100)
 
-**Mock Clients:**
+**Mock Clients (Upstream):**
 
 - mock-client-warehouse (3203)
 - mock-client-finance (3202)
 - mock-client-audit (3201)
+
+**Mock Clients (Downstream - NEW):**
+
+- mock-client-pharmacy (4201) ⭐ NEW
+- mock-client-billing (4202) ⭐ NEW
 
 **Infrastructure:**
 
@@ -417,6 +528,7 @@ docker-compose up -d --build
 
 ## 🚀 Current Implementation Status
 
+### Upstream Integration (Complete ✅)
 ✅ **Multi-Mediator Orchestration**: Single event routed to 5 mediators simultaneously
 ✅ **Transformation Mediators**: Warehouse, Finance, Audit with domain-specific formats
 ✅ **Credential Handling**: Basic Auth integrated with OpenHIM route configuration
@@ -424,6 +536,21 @@ docker-compose up -d --build
 ✅ **Event-Driven Architecture**: CloudEvents via RabbitMQ
 ✅ **OpenHIM Integration**: Full primary + secondary route support
 ✅ **Docker Deployment**: Complete stack in docker-compose
+
+### Downstream Integration (Complete ✅ - NEW)
+✅ **Pharmacy Client**: Submits orders in pharmacy format (Port 4201)
+✅ **Billing Client**: Submits billing information (Port 4202)
+✅ **Adapter Mediator**: Transforms downstream requests to Orders Service format (Port 3204)
+✅ **OpenHIM Inbound Channel**: `/orders-inbound` channel with client authentication
+✅ **Data Transformation**: Pharmacy and Billing formats → Orders Service schema
+✅ **Swagger Documentation**: Complete API docs for both downstream clients
+✅ **End-to-End Testing**: Full flow verified with multiple test cases
+
+### Orchestration Mediator (Pending 🔄)
+⏳ **Orchestration Mediator**: Multi-step workflow coordination (Port 3206)
+⏳ **Complex Workflows**: Parallel calls to Warehouse, Finance, Audit, and Orders services
+⏳ **Error Handling**: Partial success and fallback mechanisms
+⏳ **Response Aggregation**: Combined response from multiple services
 
 ## 📖 Documentation
 
