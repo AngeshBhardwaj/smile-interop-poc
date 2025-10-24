@@ -832,6 +832,9 @@ importers:
 
   apps/webhook-services/mock-client-billing:
     dependencies:
+      axios:
+        specifier: ^1.4.0
+        version: 1.12.2
       body-parser:
         specifier: ^1.20.2
         version: 1.20.3
@@ -943,6 +946,9 @@ importers:
 
   apps/webhook-services/mock-client-pharmacy:
     dependencies:
+      axios:
+        specifier: ^1.4.0
+        version: 1.12.2
       body-parser:
         specifier: ^1.20.2
         version: 1.20.3

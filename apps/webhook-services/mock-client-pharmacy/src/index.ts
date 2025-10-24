@@ -7,6 +7,7 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import axios from 'axios';
 
 const app = express();
 const PORT = process.env.PORT || 4201;
@@ -65,33 +66,84 @@ const submittedOrders: any[] = [];
  *   post:
  *     tags: [Orders]
  *     summary: Submit pharmacy order
- *     description: Submit an order in pharmacy format to be processed by OpenHIM
+ *     description: |
+ *       Submit an order in pharmacy format to be processed by OpenHIM.
+ *       The order is forwarded to OpenHIM's /orders-inbound channel with pharmacy-system credentials.
+ *       The adapter-mediator transforms the pharmacy format to Orders Service format.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [pharmacy_order_id, action, items, facility, requested_by]
  *             properties:
  *               pharmacy_order_id:
  *                 type: string
  *                 example: "PHARM-2025-001"
+ *                 description: Unique identifier for the pharmacy order
  *               action:
  *                 type: string
  *                 example: "create_order"
+ *                 description: Action to perform (currently only create_order is supported)
  *               items:
  *                 type: array
+ *                 description: List of medicine items. Can be simple strings or structured objects.
+ *                 examples:
+ *                   - ["Aspirin 500mg", "Ibuprofen 200mg"]
+ *                   - [{"medicineId": "MED-001", "name": "Aspirin", "quantity": 100}]
  *                 items:
- *                   type: string
+ *                   oneOf:
+ *                     - type: string
+ *                       example: "Aspirin 500mg"
+ *                     - type: object
+ *                       properties:
+ *                         medicineId:
+ *                           type: string
+ *                           example: "MED-001"
+ *                         name:
+ *                           type: string
+ *                           example: "Aspirin"
+ *                         category:
+ *                           type: string
+ *                           example: "medicine-supplies"
+ *                         quantity:
+ *                           type: number
+ *                           example: 100
  *               facility:
  *                 type: string
- *                 example: "Clinic-A"
+ *                 example: "Central Hospital"
+ *                 description: Facility/hospital where the order is submitted
  *               requested_by:
  *                 type: string
  *                 example: "Dr. Smith"
+ *                 description: Name of the person requesting the order
+ *               priority:
+ *                 type: string
+ *                 example: "normal"
+ *                 description: Order priority (optional, defaults to normal)
+ *               requiredDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-10-31T10:31:21.095Z"
+ *                 description: When the order is required by (optional)
+ *               deliveryAddress:
+ *                 type: object
+ *                 description: Delivery address details (optional)
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
  *     responses:
  *       200:
- *         description: Order submitted successfully
+ *         description: Order submitted and forwarded to OpenHIM successfully
  *         content:
  *           application/json:
  *             schema:
@@ -99,12 +151,36 @@ const submittedOrders: any[] = [];
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: "Pharmacy order submitted successfully"
+ *                 system:
+ *                   type: string
+ *                   example: "Pharmacy Order Management"
+ *                 submittedAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-10-24T10:31:20.992Z"
+ *                 requestNumber:
+ *                   type: integer
+ *                   example: 1
+ *                 pharmacy_order_id:
+ *                   type: string
  *                 status:
  *                   type: string
- *                 orderId:
+ *                   example: "submitted"
+ *                 orders_service_status:
  *                   type: string
+ *                   example: "pending_processing"
+ *                 openHIMResponse:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: integer
+ *                       example: 200
+ *                     message:
+ *                       type: string
+ *                       example: "Order forwarded to OpenHIM successfully"
  */
-app.post('/orders', (req: Request, res: Response) => {
+app.post('/orders', async (req: Request, res: Response) => {
   requestCounter++;
   const submittedAt = new Date().toISOString();
 
@@ -149,16 +225,58 @@ app.post('/orders', (req: Request, res: Response) => {
 
   console.log('\n');
 
-  // Send success response
-  res.status(200).json({
-    message: 'Pharmacy order submitted successfully',
-    system: 'Pharmacy Order Management',
-    submittedAt,
-    requestNumber: requestCounter,
-    pharmacy_order_id: pharmacyOrder.pharmacy_order_id,
-    status: 'submitted',
-    orders_service_status: 'pending_processing',
-  });
+  // Forward order to OpenHIM channel with pharmacy-system credentials
+  const openhimUrl = process.env.OPENHIM_ENDPOINT || 'http://openhim-core:5001/orders-inbound';
+  const openhimUsername = 'pharmacy-system';
+  const openhimPassword = 'password';
+
+  // Create basic auth header
+  const credentials = Buffer.from(`${openhimUsername}:${openhimPassword}`).toString('base64');
+
+  console.log(`📤 Forwarding to OpenHIM: ${openhimUrl}`);
+
+  try {
+    const openhimResponse = await axios.post(openhimUrl, pharmacyOrder, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`,
+      },
+      timeout: 10000,
+    });
+
+    console.log('✅ Successfully forwarded to OpenHIM');
+    console.log('OpenHIM Response:', JSON.stringify(openhimResponse.data, null, 2));
+
+    // Send success response to client
+    res.status(200).json({
+      message: 'Pharmacy order submitted successfully',
+      system: 'Pharmacy Order Management',
+      submittedAt,
+      requestNumber: requestCounter,
+      pharmacy_order_id: pharmacyOrder.pharmacy_order_id,
+      status: 'submitted',
+      orders_service_status: 'pending_processing',
+      openHIMResponse: {
+        status: openhimResponse.status,
+        message: 'Order forwarded to OpenHIM successfully',
+      },
+    });
+  } catch (error: any) {
+    console.error('❌ Failed to forward to OpenHIM');
+    console.error('Error:', error.message);
+
+    // Still return success to pharmacy client but log the OpenHIM error
+    res.status(200).json({
+      message: 'Pharmacy order received locally but failed to forward to OpenHIM',
+      system: 'Pharmacy Order Management',
+      submittedAt,
+      requestNumber: requestCounter,
+      pharmacy_order_id: pharmacyOrder.pharmacy_order_id,
+      status: 'submitted',
+      orders_service_status: 'pending_processing',
+      openHIMError: error.message,
+    });
+  }
 });
 
 /**

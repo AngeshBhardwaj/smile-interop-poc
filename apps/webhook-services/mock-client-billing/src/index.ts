@@ -7,6 +7,7 @@ import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import axios from 'axios';
 
 const app = express();
 const PORT = process.env.PORT || 4202;
@@ -65,35 +66,46 @@ const submittedBillings: any[] = [];
  *   post:
  *     tags: [Billing]
  *     summary: Submit billing information
- *     description: Submit billing/cost information for an order in billing format
+ *     description: |
+ *       Submit billing/cost information for an order in billing format to be processed by OpenHIM.
+ *       The billing information is forwarded to OpenHIM's /orders-inbound channel with billing-system credentials.
+ *       The adapter-mediator transforms the billing format to Orders Service update format.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [action, order_id, cost, currency, invoice_number, payment_status]
  *             properties:
  *               action:
  *                 type: string
  *                 example: "update_billing"
+ *                 description: Action to perform (currently only update_billing is supported)
  *               order_id:
  *                 type: string
  *                 example: "ORD-12345"
+ *                 description: Reference to the Orders Service order ID
  *               cost:
  *                 type: number
- *                 example: 1500
+ *                 example: 1500.50
+ *                 description: Total cost of the order
  *               currency:
  *                 type: string
  *                 example: "USD"
+ *                 description: Currency code for the cost
  *               invoice_number:
  *                 type: string
  *                 example: "INV-2025-001"
+ *                 description: Unique invoice identifier
  *               payment_status:
  *                 type: string
  *                 example: "pending"
+ *                 enum: [pending, partial, paid, overdue, cancelled]
+ *                 description: Current payment status
  *     responses:
  *       200:
- *         description: Billing information submitted successfully
+ *         description: Billing information submitted and forwarded to OpenHIM successfully
  *         content:
  *           application/json:
  *             schema:
@@ -101,10 +113,36 @@ const submittedBillings: any[] = [];
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: "Billing information submitted successfully"
+ *                 system:
+ *                   type: string
+ *                   example: "Billing Management System"
+ *                 submittedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 requestNumber:
+ *                   type: integer
+ *                 order_id:
+ *                   type: string
  *                 status:
  *                   type: string
+ *                   example: "submitted"
+ *                 billing_status:
+ *                   type: string
+ *                   example: "recorded"
+ *                 invoice_number:
+ *                   type: string
+ *                 openHIMResponse:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: integer
+ *                       example: 200
+ *                     message:
+ *                       type: string
+ *                       example: "Billing information forwarded to OpenHIM successfully"
  */
-app.post('/orders', (req: Request, res: Response) => {
+app.post('/orders', async (req: Request, res: Response) => {
   requestCounter++;
   const submittedAt = new Date().toISOString();
 
@@ -141,17 +179,60 @@ app.post('/orders', (req: Request, res: Response) => {
   console.log('💰 Summary:', JSON.stringify(summary, null, 2));
   console.log('\n');
 
-  // Send success response
-  res.status(200).json({
-    message: 'Billing information submitted successfully',
-    system: 'Billing Management System',
-    submittedAt,
-    requestNumber: requestCounter,
-    order_id: billingInfo.order_id,
-    status: 'submitted',
-    billing_status: 'recorded',
-    invoice_number: billingInfo.invoice_number,
-  });
+  // Forward billing information to OpenHIM channel with billing-system credentials
+  const openhimUrl = process.env.OPENHIM_ENDPOINT || 'http://openhim-core:5001/orders-inbound';
+  const openhimUsername = 'billing-system';
+  const openhimPassword = 'password';
+
+  // Create basic auth header
+  const credentials = Buffer.from(`${openhimUsername}:${openhimPassword}`).toString('base64');
+
+  console.log(`📤 Forwarding to OpenHIM: ${openhimUrl}`);
+
+  try {
+    const openhimResponse = await axios.post(openhimUrl, billingInfo, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`,
+      },
+      timeout: 10000,
+    });
+
+    console.log('✅ Successfully forwarded to OpenHIM');
+    console.log('OpenHIM Response:', JSON.stringify(openhimResponse.data, null, 2));
+
+    // Send success response to client
+    res.status(200).json({
+      message: 'Billing information submitted successfully',
+      system: 'Billing Management System',
+      submittedAt,
+      requestNumber: requestCounter,
+      order_id: billingInfo.order_id,
+      status: 'submitted',
+      billing_status: 'recorded',
+      invoice_number: billingInfo.invoice_number,
+      openHIMResponse: {
+        status: openhimResponse.status,
+        message: 'Billing information forwarded to OpenHIM successfully',
+      },
+    });
+  } catch (error: any) {
+    console.error('❌ Failed to forward to OpenHIM');
+    console.error('Error:', error.message);
+
+    // Still return success to billing client but log the OpenHIM error
+    res.status(200).json({
+      message: 'Billing information received locally but failed to forward to OpenHIM',
+      system: 'Billing Management System',
+      submittedAt,
+      requestNumber: requestCounter,
+      order_id: billingInfo.order_id,
+      status: 'submitted',
+      billing_status: 'recorded',
+      invoice_number: billingInfo.invoice_number,
+      openHIMError: error.message,
+    });
+  }
 });
 
 /**

@@ -41,13 +41,25 @@ function buildMediatorResponse(
  * Transform pharmacy format to Orders Service JSON
  */
 function transformPharmacyToOrders(pharmacyData: any): any {
-  const items = (pharmacyData.items || []).map((item: any) => ({
-    medicineId: item.medicineId,
-    name: item.name,
-    category: item.category || 'medicine-supplies',
-    unitOfMeasure: item.unitOfMeasure || 'units',
-    quantityOrdered: item.quantity || item.quantityOrdered || 0,
-  }));
+  const items = (pharmacyData.items || []).map((item: any, idx: number) => {
+    // Handle both string items (for display) and structured items (with medicineId, name, etc.)
+    if (typeof item === 'string') {
+      return {
+        medicineId: `MED-${idx + 1}`,
+        name: item,
+        category: 'medicine-supplies',
+        unitOfMeasure: 'units',
+        quantityOrdered: 1,
+      };
+    }
+    return {
+      medicineId: item.medicineId || `MED-${idx + 1}`,
+      name: item.name || item,
+      category: item.category || 'medicine-supplies',
+      unitOfMeasure: item.unitOfMeasure || 'units',
+      quantityOrdered: item.quantity || item.quantityOrdered || 1,
+    };
+  });
 
   return {
     orderType: 'medicine',
@@ -77,15 +89,17 @@ function transformPharmacyToOrders(pharmacyData: any): any {
  */
 function transformBillingToOrders(billingData: any): any {
   return {
-    orderId: billingData.order_id,
-    billingInfo: {
-      cost: billingData.cost,
+    orderId: billingData.order_id, // Used to determine endpoint for PUT request
+    financials: {
+      totalAmount: billingData.cost,
       currency: billingData.currency || 'USD',
-      invoiceNumber: billingData.invoice_number,
-      paymentStatus: billingData.payment_status,
+      paymentTerms: billingData.payment_status || 'pending',
+      budgetCode: billingData.invoice_number,
     },
     metadata: {
       source: 'billing-system',
+      sourceInvoiceNumber: billingData.invoice_number,
+      paymentStatus: billingData.payment_status,
       action: billingData.action,
       transformedAt: new Date().toISOString(),
     }
@@ -113,10 +127,13 @@ function transformOrdersToBilling(ordersResponse: any, originalData: any): any {
   return {
     status: 'success',
     order_id: originalData.order_id,
-    orders_service_id: ordersResponse.orderId || ordersResponse.id,
+    orders_service_id: ordersResponse.order?.orderId || ordersResponse.orderId || ordersResponse.id,
     billing_status: 'recorded',
     updated_at: new Date().toISOString(),
     invoice_number: originalData.invoice_number,
+    cost: originalData.cost,
+    currency: originalData.currency,
+    payment_status: originalData.payment_status,
     message: 'Billing information successfully recorded',
   };
 }
