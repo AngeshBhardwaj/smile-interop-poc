@@ -1,0 +1,16 @@
+{
+  "urn": "urn:mediator:smile-adapter",
+  "version": "1.0.0",
+  "name": "SMILE Adapter Mediator",
+  "description": "Transforms downstream requests from Pharmacy and Billing systems to Orders Service format",
+  "endpoints": [
+    {
+      "name": "Adapter Transformation Endpoint",
+      "host": "localhost",
+      "port": 3204,
+      "path": "/transform-downstream",
+      "type": "http"
+    }
+  ],
+  "defaultChannelConfig": []
+}

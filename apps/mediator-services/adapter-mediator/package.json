@@ -1,0 +1,39 @@
+{
+  "name": "@smile/adapter-mediator",
+  "version": "1.0.0",
+  "description": "OpenHIM adapter mediator for transforming downstream requests to Orders Service format",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "openhim",
+    "mediator",
+    "adapter",
+    "downstream",
+    "transformation"
+  ],
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "openhim-mediator-utils": "^0.2.3",
+    "axios": "^1.6.2",
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.3.1",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@types/express": "^4.17.21",
+    "@types/body-parser": "^1.19.5",
+    "@types/uuid": "^9.0.7",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  }
+}

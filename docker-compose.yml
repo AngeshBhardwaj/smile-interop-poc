@@ -550,6 +550,48 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  # Adapter Mediator - Transforms downstream requests (Pharmacy/Billing) to Orders Service format
+  adapter-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/adapter-mediator/Dockerfile
+    container_name: smile-adapter-mediator
+    ports:
+      - "3204:3204"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      PORT: 3204
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Client Configuration
+      CLIENT_ENDPOINT: http://orders-service:3005/api/v1/orders
+      CLIENT_NAME: Orders Service
+      CLIENT_TIMEOUT: 10000
+
+      # Transformation Configuration
+      ENABLE_TRANSFORMATION_LOGGING: "true"
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+      orders-service:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3204/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
   # Mock FHIR R4 Client - DISABLED (port conflict with mock-client-audit)
   # mock-client-fhir:
   #   build:
@@ -656,6 +698,50 @@ services:
       - smile-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3201/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Pharmacy Client - Sends orders via OpenHIM for downstream integration
+  mock-client-pharmacy:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-pharmacy/Dockerfile
+    container_name: smile-mock-client-pharmacy
+    ports:
+      - "4201:4201"
+    environment:
+      NODE_ENV: development
+      PORT: 4201
+      SERVICE_NAME: Pharmacy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4201/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Billing Client - Sends billing info via OpenHIM for downstream integration
+  mock-client-billing:
+    build:
+      context: .
+      dockerfile: apps/webhook-services/mock-client-billing/Dockerfile
+    container_name: smile-mock-client-billing
+    ports:
+      - "4202:4202"
+    environment:
+      NODE_ENV: development
+      PORT: 4202
+      SERVICE_NAME: Billing
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4202/health"]
       interval: 30s
       timeout: 10s
       retries: 3
