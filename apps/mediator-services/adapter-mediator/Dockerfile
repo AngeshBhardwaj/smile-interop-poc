@@ -27,12 +27,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY --from=builder /app/apps/mediator-services/adapter-mediator/package.json ./
-COPY --from=builder /app/apps/mediator-services/adapter-mediator/dist ./dist
+# Copy package files and configuration
+COPY --from=builder /app/apps/mediator-services/adapter-mediator/package.json ./apps/mediator-services/adapter-mediator/
+COPY --from=builder /app/apps/mediator-services/adapter-mediator/dist ./apps/mediator-services/adapter-mediator/dist
+COPY --from=builder /app/apps/mediator-services/adapter-mediator/mediatorConfig.json ./apps/mediator-services/adapter-mediator/
 
 # Install production dependencies only
-RUN npm install --only=production
+RUN cd /app/apps/mediator-services/adapter-mediator && npm install --only=production
 
 # Expose port
 EXPOSE 3204
@@ -40,6 +41,9 @@ EXPOSE 3204
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3204/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })"
+
+# Set working directory to service
+WORKDIR /app/apps/mediator-services/adapter-mediator
 
 # Run
 CMD ["node", "dist/index.js"]
