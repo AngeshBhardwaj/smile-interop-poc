@@ -33,97 +33,6 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  apps/app-service:
-    dependencies:
-      '@opentelemetry/api':
-        specifier: ^1.8.0
-        version: 1.9.0
-      '@opentelemetry/auto-instrumentations-node':
-        specifier: ^0.42.0
-        version: 0.42.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-node':
-        specifier: ^0.49.1
-        version: 0.49.1(@opentelemetry/api@1.9.0)
-      '@smile/cloud-events':
-        specifier: workspace:*
-        version: link:../../packages/cloud-events
-      '@smile/common':
-        specifier: workspace:*
-        version: link:../../packages/common
-      amqplib:
-        specifier: ^0.10.3
-        version: 0.10.9
-      cloudevents:
-        specifier: ^7.0.2
-        version: 7.0.2
-      cors:
-        specifier: ^2.8.5
-        version: 2.8.5
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
-      express:
-        specifier: ^4.18.2
-        version: 4.21.2
-      pino:
-        specifier: ^8.19.0
-        version: 8.21.0
-      uuid:
-        specifier: ^9.0.1
-        version: 9.0.1
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@types/amqplib':
-        specifier: ^0.10.4
-        version: 0.10.7
-      '@types/cors':
-        specifier: ^2.8.17
-        version: 2.8.19
-      '@types/express':
-        specifier: ^4.17.21
-        version: 4.17.23
-      '@types/jest':
-        specifier: ^29.5.12
-        version: 29.5.14
-      '@types/node':
-        specifier: ^20.11.24
-        version: 20.19.19
-      '@types/supertest':
-        specifier: ^6.0.2
-        version: 6.0.3
-      '@types/uuid':
-        specifier: ^9.0.8
-        version: 9.0.8
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^7.1.1
-        version: 7.18.0(@typescript-eslint/parser@7.18.0)(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^7.1.1
-        version: 7.18.0(eslint@8.57.1)(typescript@5.9.3)
-      eslint:
-        specifier: ^8.57.0
-        version: 8.57.1
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@20.19.19)
-      prettier:
-        specifier: ^3.2.5
-        version: 3.6.2
-      supertest:
-        specifier: ^6.3.4
-        version: 6.3.4
-      ts-jest:
-        specifier: ^29.1.2
-        version: 29.4.4(@babel/core@7.28.4)(jest@29.7.0)(typescript@5.9.3)
-      tsx:
-        specifier: ^4.7.1
-        version: 4.20.6
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
   apps/health-service:
     dependencies:
       '@smile/cloud-events':
@@ -341,6 +250,52 @@ importers:
       tsx:
         specifier: ^4.7.1
         version: 4.20.6
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  apps/mediator-services/adapter-mediator:
+    dependencies:
+      axios:
+        specifier: ^1.6.2
+        version: 1.12.2
+      body-parser:
+        specifier: ^1.20.2
+        version: 1.20.3
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      openhim-mediator-utils:
+        specifier: ^0.2.3
+        version: 0.2.4
+      pino:
+        specifier: ^8.16.2
+        version: 8.21.0
+      pino-pretty:
+        specifier: ^10.3.1
+        version: 10.3.1
+      uuid:
+        specifier: ^9.0.1
+        version: 9.0.1
+    devDependencies:
+      '@types/body-parser':
+        specifier: ^1.19.5
+        version: 1.19.6
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      '@types/node':
+        specifier: ^20.10.4
+        version: 20.19.19
+      '@types/uuid':
+        specifier: ^9.0.7
+        version: 9.0.8
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.19.19)(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -875,6 +830,43 @@ importers:
         specifier: ^5.1.6
         version: 5.9.3
 
+  apps/webhook-services/mock-client-billing:
+    dependencies:
+      body-parser:
+        specifier: ^1.20.2
+        version: 1.20.3
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      swagger-jsdoc:
+        specifier: ^6.2.8
+        version: 6.2.8(openapi-types@12.1.3)
+      swagger-ui-express:
+        specifier: ^5.0.0
+        version: 5.0.1(express@4.21.2)
+    devDependencies:
+      '@types/body-parser':
+        specifier: ^1.19.2
+        version: 1.19.6
+      '@types/express':
+        specifier: ^4.17.17
+        version: 4.17.23
+      '@types/node':
+        specifier: ^20.5.0
+        version: 20.19.19
+      '@types/swagger-jsdoc':
+        specifier: ^6.0.4
+        version: 6.0.4
+      '@types/swagger-ui-express':
+        specifier: ^4.1.6
+        version: 4.1.8
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.1.6
+        version: 5.9.3
+
   apps/webhook-services/mock-client-fhir:
     dependencies:
       body-parser:
@@ -913,6 +905,43 @@ importers:
         version: 5.9.3
 
   apps/webhook-services/mock-client-hl7:
+    dependencies:
+      body-parser:
+        specifier: ^1.20.2
+        version: 1.20.3
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      swagger-jsdoc:
+        specifier: ^6.2.8
+        version: 6.2.8(openapi-types@12.1.3)
+      swagger-ui-express:
+        specifier: ^5.0.0
+        version: 5.0.1(express@4.21.2)
+    devDependencies:
+      '@types/body-parser':
+        specifier: ^1.19.2
+        version: 1.19.6
+      '@types/express':
+        specifier: ^4.17.17
+        version: 4.17.23
+      '@types/node':
+        specifier: ^20.5.0
+        version: 20.19.19
+      '@types/swagger-jsdoc':
+        specifier: ^6.0.4
+        version: 6.0.4
+      '@types/swagger-ui-express':
+        specifier: ^4.1.6
+        version: 4.1.8
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.1.6
+        version: 5.9.3
+
+  apps/webhook-services/mock-client-pharmacy:
     dependencies:
       body-parser:
         specifier: ^1.20.2

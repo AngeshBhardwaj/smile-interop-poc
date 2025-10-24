@@ -108,7 +108,7 @@ function transformOrdersToBilling(ordersResponse: any, originalData: any): any {
  * POST /transform-downstream
  * Transform downstream requests and forward to Orders Service
  */
-router.post('/transform-downstream', async (req: Request, res: Response) => {
+router.post('/transform-downstream', async (req: Request, res: Response): Promise<void> => {
   const startTime = Date.now();
   const correlationId = (req.headers['x-correlation-id'] as string) || uuidv4();
   const orchestrations: any[] = [];
@@ -165,7 +165,8 @@ router.post('/transform-downstream', async (req: Request, res: Response) => {
       );
 
       transformLogger.warn('Unknown request type', { correlationId });
-      return res.status(400).json(response);
+      res.status(400).json(response);
+      return;
     }
 
     transformLogger.debug('Transformed data created', {
@@ -248,7 +249,8 @@ router.post('/transform-downstream', async (req: Request, res: Response) => {
         orchestrations
       );
 
-      return res.status(502).json(response);
+      res.status(502).json(response);
+      return;
     }
 
     // Transform response back to client format
