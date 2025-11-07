@@ -1,0 +1,16 @@
+{
+  "urn": "urn:mediator:smile-orchestration",
+  "version": "1.0.0",
+  "name": "SMILE Orchestration Mediator",
+  "description": "Coordinates multi-step workflows orchestrating calls to Warehouse, Finance, Audit mediators and Orders Service",
+  "endpoints": [
+    {
+      "name": "Orchestration Endpoint",
+      "host": "localhost",
+      "port": 3206,
+      "path": "/orchestrate",
+      "type": "http"
+    }
+  ],
+  "defaultChannelConfig": []
+}

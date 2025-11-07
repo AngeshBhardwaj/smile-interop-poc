@@ -183,6 +183,33 @@ services:
       timeout: 10s
       retries: 5
 
+  # Hapi FHIR Server - FHIR-compliant resource management
+  hapi-fhir:
+    image: hapiproject/hapi:latest
+    container_name: smile-hapi-fhir
+    ports:
+      - "8888:8080"
+    environment:
+      # Server Configuration
+      hapi.fhir.server_address: "http://hapi-fhir:8080/fhir/"
+      hapi.fhir.default_encoding: json
+      hapi.fhir.validation.enabled: "true"
+
+      # CORS Configuration for inter-service communication
+      hapi.fhir.cors.allowed_origin: "*"
+
+      # Logging
+      logging.level.ca.uhn.fhir: INFO
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/fhir/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
   # Health Service - HIPAA-compliant patient registration
   health-service:
     build:
@@ -407,7 +434,7 @@ services:
       OPENHIM_TRUST_SELF_SIGNED: "true"
 
       # Client Configuration - Webhook endpoint for warehouse orders
-      CLIENT_ENDPOINT: https://webhook.site/d9ec65ae-e88c-4eb0-a3d5-76e6f27a8f93
+      CLIENT_ENDPOINT: https://webhook.site/096a7450-e497-44c1-9c08-583259fa290e
       CLIENT_NAME: Warehouse Fulfillment Webhook
       CLIENT_TIMEOUT: 30000
     depends_on:
@@ -586,6 +613,64 @@ services:
       - smile-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3204/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Orchestration Mediator (Port 3206)
+  orchestration-mediator:
+    build:
+      context: .
+      dockerfile: apps/mediator-services/orchestration-mediator/Dockerfile
+    container_name: smile-orchestration-mediator
+    ports:
+      - "3206:3206"
+    environment:
+      # Service Configuration
+      NODE_ENV: development
+      PORT: 3206
+      LOG_LEVEL: info
+
+      # OpenHIM Configuration
+      OPENHIM_API_URL: https://openhim-core:8080
+      OPENHIM_USERNAME: root@openhim.org
+      OPENHIM_PASSWORD: password
+      OPENHIM_TRUST_SELF_SIGNED: "true"
+
+      # Mediator Endpoints (for parallel orchestration)
+      WAREHOUSE_ENDPOINT: http://warehouse-transformation-mediator:3301/transform
+      WAREHOUSE_TIMEOUT: 5000
+      FINANCE_ENDPOINT: http://finance-transformation-mediator:3302/transform
+      FINANCE_TIMEOUT: 5000
+      AUDIT_ENDPOINT: http://audit-transformation-mediator:3303/transform
+      AUDIT_TIMEOUT: 5000
+
+      # Orders Service Endpoint
+      ORDERS_ENDPOINT: http://orders-service:3005/api/v1/orders
+      ORDERS_TIMEOUT: 5000
+      ORDERS_AUTH_TOKEN: mock-jwt-token
+
+      # Orchestration Settings
+      MAX_RETRIES: 3
+      RETRY_JITTER: "true"
+      MAX_TOTAL_EXECUTION_MS: 30000
+    depends_on:
+      openhim-core:
+        condition: service_healthy
+      warehouse-transformation-mediator:
+        condition: service_started
+      finance-transformation-mediator:
+        condition: service_started
+      audit-transformation-mediator:
+        condition: service_started
+      orders-service:
+        condition: service_healthy
+    networks:
+      - smile-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3206/health"]
       interval: 30s
       timeout: 10s
       retries: 3

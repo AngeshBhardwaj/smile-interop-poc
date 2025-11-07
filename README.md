@@ -110,11 +110,22 @@ docker-compose ps
 - Orders Service creates/updates orders
 - Response transformed back to client format and returned
 
+### FHIR Services
+
+**Hapi FHIR Server** (FHIR-compliant Resource Management) **[NEW]**
+
+- **Port**: 8888
+- **FHIR API Base**: http://localhost:8888/fhir/
+- **Web UI**: http://localhost:8888/
+- **Patient Resources**: http://localhost:8888/fhir/Patient
+- **Health Check**: curl -X GET http://localhost:8888/fhir/Patient
+
 ### Infrastructure Services
 
 - **RabbitMQ Management**: http://localhost:15672 (admin/admin123)
 - **OpenHIM Console**: http://localhost:9000
 - **OpenHIM Core API**: https://127.0.0.1:8080
+- **Hapi FHIR Server**: http://localhost:8888/fhir/ **[NEW]**
 - **Jaeger Tracing**: http://localhost:16686
 - **Grafana**: http://localhost:3001 (admin/admin123)
 - **Prometheus**: http://localhost:9090
@@ -194,6 +205,99 @@ curl -X POST http://localhost:4202/orders \
   }
 }
 ```
+
+---
+
+### Testing Hapi FHIR Server (NEW)
+
+#### 1. Query All Patient Resources
+
+```bash
+curl -X GET "http://localhost:8888/fhir/Patient" \
+  -H "Accept: application/fhir+json"
+```
+
+**Expected Response**:
+```json
+{
+  "resourceType": "Bundle",
+  "id": "ec14aa0d-544e-4f25-8d38-7b25109a48c5",
+  "meta": {
+    "lastUpdated": "2025-11-07T15:44:52.122+00:00"
+  },
+  "type": "searchset",
+  "total": 0,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://hapi-fhir:8080/fhir/Patient"
+    }
+  ]
+}
+```
+
+#### 2. Create a New FHIR Patient Resource
+
+```bash
+curl -X POST "http://localhost:8888/fhir/Patient" \
+  -H "Content-Type: application/fhir+json" \
+  -d '{
+    "resourceType": "Patient",
+    "name": [
+      {
+        "given": ["John"],
+        "family": "Doe"
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1980-01-01",
+    "identifier": [
+      {
+        "system": "http://example.com/mrn",
+        "value": "MRN123"
+      }
+    ],
+    "contact": [
+      {
+        "system": "phone",
+        "value": "555-1234"
+      }
+    ]
+  }'
+```
+
+#### 3. Query Other FHIR Resources
+
+```bash
+# Get all Observations
+curl -X GET "http://localhost:8888/fhir/Observation" \
+  -H "Accept: application/fhir+json"
+
+# Get all Medications
+curl -X GET "http://localhost:8888/fhir/Medication" \
+  -H "Accept: application/fhir+json"
+
+# Get all Service Requests
+curl -X GET "http://localhost:8888/fhir/ServiceRequest" \
+  -H "Accept: application/fhir+json"
+```
+
+#### 4. Get Server Capabilities
+
+```bash
+curl -X GET "http://localhost:8888/fhir/metadata" \
+  -H "Accept: application/fhir+json" | jq .
+```
+
+#### 5. Access Hapi FHIR Web UI
+
+Open browser: **http://localhost:8888/**
+
+This provides a visual interface to:
+- Browse and search FHIR resources
+- Create and edit resources
+- View server statistics
+- Test FHIR API calls
 
 ---
 
@@ -413,6 +517,7 @@ docker-compose down
 - MongoDB (27017)
 - OpenHIM Core (5000, 5001, 8080)
 - OpenHIM Console (9000)
+- Hapi FHIR Server (8888) ⭐ NEW - FHIR-compliant resource management
 - Jaeger (16686)
 - Prometheus (9090)
 - Grafana (3001)
@@ -545,6 +650,14 @@ docker-compose up -d --build
 ✅ **Data Transformation**: Pharmacy and Billing formats → Orders Service schema
 ✅ **Swagger Documentation**: Complete API docs for both downstream clients
 ✅ **End-to-End Testing**: Full flow verified with multiple test cases
+
+### FHIR Server Integration (Complete ✅ - NEW)
+✅ **Hapi FHIR Server**: FHIR R4-compliant resource management (Port 8888)
+✅ **FHIR Resources**: Full CRUD operations on Patient, Observation, Medication, ServiceRequest
+✅ **Default Database**: H2 in-memory database for development
+✅ **CORS Enabled**: Cross-service communication enabled
+✅ **Web UI**: Interactive web interface for resource management
+✅ **REST API**: Complete FHIR-compliant REST API accessible at http://localhost:8888/fhir/
 
 ### Orchestration Mediator (Pending 🔄)
 ⏳ **Orchestration Mediator**: Multi-step workflow coordination (Port 3206)
